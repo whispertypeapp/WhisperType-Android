@@ -10,7 +10,7 @@
 
 [![Android](https://img.shields.io/badge/Android-13%2B%20(API%2033)-3DDC84?logo=android&logoColor=white)](#requirements)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![Release](https://img.shields.io/badge/version-1.1.7%20(61)-blue)](#install)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/whispertypeapp/WhisperType-Android/releases/tag/v1.0.0)
 [![GitHub](https://img.shields.io/badge/github-whispertypeapp%2FWhisperType--Android-181717?logo=github)](https://github.com/whispertypeapp/WhisperType-Android)
 
 ---
@@ -31,7 +31,7 @@ WhisperType is an open-source **Android voice-to-text** app that **keeps your no
 
 ## Quick start
 
-1. Install the APK from [Releases](https://github.com/whispertypeapp/WhisperType-Android/releases).  
+1. Install `WhisperType-Android-1.0.0.apk` from [Releases v1.0.0](https://github.com/whispertypeapp/WhisperType-Android/releases/tag/v1.0.0).  
 2. Grant mic, overlay, accessibility, and notifications as prompted.  
 3. **Settings** → paste your **Gemini API key** from [AI Studio](https://aistudio.google.com/).  
 4. Focus any text field → tap the bubble (or Grave `` ` ``) → speak.
@@ -56,7 +56,7 @@ Privacy footnote: **No WhisperType servers.** We do **not** claim to be more pri
   <img src="docs/screenshots/gallery/05-dictionary-add.jpg" alt="Dictionary add" width="160" />
   <img src="docs/screenshots/gallery/06-gemini-key-entry.jpg" alt="Gemini key entry" width="160" />
   <img src="docs/screenshots/gallery/07-gemini-key-saved.jpg" alt="Key saved on device" width="160" />
-  <img src="docs/screenshots/gallery/08-about-1.1.7.jpg" alt="About 1.1.7" width="160" />
+  <img src="docs/screenshots/gallery/08-about-1.1.7.jpg" alt="About / Status" width="160" />
 </p>
 
 Curated set only — see `docs/screenshots/gallery/`. Full UI dumps live under `docs/screenshots/ui-v2/` etc. for maintainers, not the landing page.
@@ -71,7 +71,7 @@ Curated set only — see `docs/screenshots/gallery/`. Full UI dumps live under `
 | Backend | **No WhisperType servers** | Their cloud | Their stack |
 | Source | **OSS** | Closed | Closed |
 
-## Features (v1.1.7)
+## Features (v1.0.0)
 
 - Home · History · Dictionary · Settings (dark UI v2)  
 - Speech: English / **Hinglish** · Auto-stop 1 min · Grave shortcut · Bubble controls  
@@ -98,7 +98,6 @@ git clone https://github.com/whispertypeapp/WhisperType-Android.git
 cd WhisperType-Android
 ```
 
-**Build identity:** versionName **1.1.7** · versionCode **61** · Status UI commit **`d7404ee`**
 
 ## Contributing
 

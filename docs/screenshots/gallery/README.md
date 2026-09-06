@@ -9,7 +9,7 @@
 | `05-dictionary-add.jpg` | Dictionary add |
 | `06-gemini-key-entry.jpg` | Gemini API key entry |
 | `07-gemini-key-saved.jpg` | Key saved on device |
-| `08-about-1.1.7.jpg` | About / Status 1.1.7 |
+| `08-about-1.1.7.jpg` | About / Status |
 | `09-trust.png` | Trust / $0 OSS no middleman |
 
 **Demo hero video (not in this folder — too large for git unless PL opts in):**  
