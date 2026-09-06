@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <issue id="NewApi" severity="error" />
+    <issue id="StopShip" severity="error" />
+    <issue id="TypographyQuotes" severity="ignore" />
+    <issue id="UnusedResources" severity="warning" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+</lint>

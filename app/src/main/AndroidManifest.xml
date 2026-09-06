@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Normal permission (granted at install): required for AudioManager.setMode /
+         startBluetoothSco, which the Bluetooth recording source needs. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Wispr-parity production overlay gate (Phase 1, §4.1): the application
+         overlay window is TYPE_APPLICATION_OVERLAY, which requires this. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".WhisperTypeApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.WhisperType">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".platform.runtime.FlowRuntimeService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse|microphone"
+            android:label="@string/flow_runtime_label"
+            tools:targetApi="34">
+            <!-- specialUse FGS (API 34+): the persistent overlay runs without a
+                 runtime permission; the microphone type is added only while
+                 dictating, after RECORD_AUDIO is granted. On API 33 the
+                 specialUse bit is inert but accepted because it is
+                 manifest-declared. -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="overlay_host_and_dictation"
+                tools:targetApi="34" />
+        </service>
+
+        <!-- Runs in a dedicated :accessibility process per the locked rebuild
+             decision (§3): the actor that sees the screen (focus / target /
+             insertion) is isolated from the main process which owns the overlay,
+             microphone session, and Gemini connection. Typed IPC links the two. -->
+        <service
+            android:name=".platform.accessibility.WhisperTypeAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:process=":accessibility"
+            android:label="@string/accessibility_service_label">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Quick Settings tile (1.0.1): toggles the app-enabled kill switch,
+             the same setting as Settings -> General -> App enabled. The icon is
+             a circular render of the app logo (white mic + keyboard on the
+             blue-teal gradient) generated from ic_bubble_logo.png, so the tile
+             shows the round logo instead of a square bitmap. -->
+        <service
+            android:name=".platform.quicksettings.OverlayQuickSettingsTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_tile"
+            android:label="@string/quick_settings_overlay_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+</application>
+
+</manifest>
