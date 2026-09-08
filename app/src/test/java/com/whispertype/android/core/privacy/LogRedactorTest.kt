@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [LogRedactor] (privacy redaction requirements). Proves both prevention (no
+ * Unit tests for [LogRedactor] (PRD FR-6 / §12). Proves both prevention (no
  * secret remains) and preservation (benign content is left unchanged).
  */
 class LogRedactorTest {

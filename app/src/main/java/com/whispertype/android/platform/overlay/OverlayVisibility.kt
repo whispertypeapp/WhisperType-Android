@@ -5,7 +5,7 @@ import com.whispertype.android.core.model.OverlayUiState
 
 /**
  * The visual surface the overlay should present for a given [OverlayUiState].
- * Mirrors the overlay visibility spec. Pure and framework-free so it runs on the JVM host test.
+ * Mirrors PRD §17.2. Pure and framework-free so it runs on the JVM host test.
  */
 enum class OverlayVisibility {
     Hidden,

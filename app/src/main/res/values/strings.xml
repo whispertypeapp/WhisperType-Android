@@ -13,6 +13,13 @@
     <string name="mic_notification_channel" tools:ignore="UnusedResources">Dictation recording</string>
     <string name="mic_notification_title" tools:ignore="UnusedResources">WhisperType is listening</string>
     <string name="mic_notification_text" tools:ignore="UnusedResources">Tap Stop when you finish speaking</string>
+    <string name="notification_channel_bubble">WhisperType bubble</string>
+    <string name="notification_bubble_ready_title">WhisperType bubble is ready</string>
+    <string name="notification_bubble_ready_text">Your microphone turns on only when you tap the bubble.</string>
+    <string name="notification_recording_title">Recording dictation</string>
+    <string name="notification_recording_text">WhisperType is using your microphone.</string>
+    <string name="notification_finishing_title">Finishing dictation</string>
+    <string name="notification_finishing_text">Your microphone is off.</string>
     <string name="notification_action_stop" tools:ignore="UnusedResources">Stop</string>
     <string name="notification_action_cancel" tools:ignore="UnusedResources">Cancel</string>
     <string name="notification_action_open" tools:ignore="UnusedResources">Open WhisperType</string>
@@ -114,6 +121,18 @@
     <string name="home_empty_title">Your first words land here</string>
     <string name="home_empty_body">Open any app, tap the bubble, and speak. WhisperType keeps a private count on this phone.</string>
     <string name="home_recent_title">Recent</string>
+    <string name="home_glance_title">At a glance</string>
+    <string name="home_stats_sessions_label">All-time sessions</string>
+    <string name="home_stats_wpm_label">Average words / min</string>
+    <string name="home_stats_wpm_empty">No timed sessions yet</string>
+    <string name="home_stats_per_session_label">Average words / session</string>
+    <string name="home_recent_view_history">View history</string>
+    <string name="home_recent_empty_title">Your first dictation will appear here</string>
+    <string name="home_recent_empty_body">Tap the bubble in any text field to begin.</string>
+    <string name="home_privacy_card_title">Dictation history is turned off</string>
+    <string name="home_privacy_card_body">Nothing is stored on this device or sent to external servers for storage.</string>
+    <string name="home_privacy_turn_on">Turn on history</string>
+    <string name="home_hero_no_sessions_week">No sessions yet this week</string>
     <string name="home_banner_accessibility">Accessibility is off</string>
     <string name="home_banner_key">Add your Gemini API key</string>
     <string name="home_banner_mic">Microphone is off</string>
@@ -138,6 +157,12 @@
     <string name="settings_speech_mode">Speech</string>
     <string name="language_english">English</string>
     <string name="language_hinglish">Hinglish</string>
+    <string name="settings_transcription_mode">Transcription mode</string>
+    <string name="transcription_mode_verbatim">Verbatim</string>
+    <string name="transcription_mode_verbatim_desc">Transcribes speech word-for-word exactly as spoken, retaining filler words (um, uh) and repetitions.</string>
+    <string name="transcription_mode_smart">Smart</string>
+    <string name="transcription_mode_smart_desc">Cleans up filler words, resolves inline self-corrections, and applies punctuation and formatting.</string>
+    <string name="settings_transcription_mode_why">Both modes stream directly from Google\'s gemini-3.5-transcribe-live model. Verbatim produces an exact literal transcript, while Smart shapes and polishes the text server-side.</string>
     <string name="settings_history">Save history</string>
     <string name="settings_history_desc">Keep a private local record of your dictation.</string>
     <string name="settings_history_retention">Keep history for</string>
@@ -192,12 +217,36 @@
     <string name="hotkey_enter">Enter</string>
     <string name="hotkey_tab">Tab</string>
     <string name="settings_dictionary">Custom dictionary</string>
-    <string name="settings_dictionary_desc">Correct recurring words or spellings at insertion.</string>
+    <string name="settings_dictionary_desc">Teach WhisperType how to write names, terms, and phrases after it transcribes them.</string>
     <string name="settings_dictionary_add">Add</string>
-    <string name="settings_dictionary_word_hint">Word as spoken</string>
-    <string name="settings_dictionary_replacement_hint">Always write as (optional)</string>
-    <string name="settings_dictionary_empty">No dictionary entries yet.</string>
+    <string name="settings_dictionary_word_hint">What you say</string>
+    <string name="settings_dictionary_replacement_hint">How it should be written</string>
+    <string name="settings_dictionary_empty">No dictionary rules yet.</string>
     <string name="settings_dictionary_clear">Clear all</string>
+    <string name="dictionary_title">Dictionary</string>
+    <string name="dictionary_description">Teach WhisperType how to write names, terms, and phrases after it transcribes them.</string>
+    <string name="dictionary_example_callout">You say: \u201ckuber net ease\u201d \u2192 It writes: \u201cKubernetes\u201d.</string>
+    <string name="dictionary_tag_you_say">YOU SAY</string>
+    <string name="dictionary_tag_it_writes">IT WRITES</string>
+    <string name="dictionary_needs_replacement">Needs a replacement</string>
+    <string name="dictionary_action_edit">Edit</string>
+    <string name="dictionary_action_delete">Delete</string>
+    <string name="dictionary_add_rule">Add rule</string>
+    <string name="dictionary_sheet_add_title">Add dictionary rule</string>
+    <string name="dictionary_sheet_edit_title">Edit dictionary rule</string>
+    <string name="dictionary_field_say_label">What you say</string>
+    <string name="dictionary_field_say_placeholder">e.g. kuber net ease</string>
+    <string name="dictionary_field_write_label">How it should be written</string>
+    <string name="dictionary_field_write_placeholder">e.g. Kubernetes</string>
+    <string name="dictionary_warning_identical">This rule will not change the transcript</string>
+    <string name="dictionary_action_save">Save</string>
+    <string name="dictionary_action_save_anyway">Save anyway</string>
+    <string name="dictionary_action_cancel">Cancel</string>
+    <string name="dictionary_action_clear_all">Clear all</string>
+    <string name="dictionary_clear_confirm_title">Clear all dictionary rules?</string>
+    <string name="dictionary_clear_confirm_action">Clear</string>
+    <string name="settings_notifications_row">Notifications</string>
+    <string name="settings_notifications_row_desc">If notifications are turned off, Android may still show an active foreground service in Task Manager.</string>
     <string name="settings_bubble_reset">Reset bubble position</string>
     <string name="settings_bubble_reset_desc">Return the mic bubble to its default position.</string>
     <string name="settings_section_general">General</string>
@@ -274,7 +323,7 @@
     <string name="onboard_continue">Continue</string>
     <string name="onboard_skip_for_now">Skip for now</string>
     <string name="onboard_mic_title">Microphone, only while you speak</string>
-    <string name="onboard_mic_body">We also show a recording notification so you always know the mic is on. Neither runs in the background when you are idle.</string>
+    <string name="onboard_mic_body">WhisperType shows a background status notification so Android keeps the bubble running and lets you stop dictation from the shade.</string>
     <string name="onboard_allow_mic">Allow mic and notifications</string>
     <string name="onboard_a11y_why_title">Find the field. Put the words in.</string>
     <string name="onboard_a11y_why_body">Accessibility is how WhisperType sees the cursor and inserts text. It does not scrape the rest of your screen, and it is off in password fields.</string>
@@ -304,12 +353,16 @@
     <string name="onboard_next">Next</string>
 
     <plurals name="home_hero_week_sub">
-        <item quantity="one">%1$d session · keep going</item>
-        <item quantity="other">%1$d sessions · keep going</item>
+        <item quantity="one">%1$d session</item>
+        <item quantity="other">%1$d sessions</item>
     </plurals>
     <plurals name="home_hero_week_wpm">
-        <item quantity="one">Across %1$d session · %2$d words/min</item>
-        <item quantity="other">Across %1$d sessions · %2$d words/min</item>
+        <item quantity="one">%1$d session · %2$d words/min</item>
+        <item quantity="other">%1$d sessions · %2$d words/min</item>
+    </plurals>
+    <plurals name="dictionary_clear_confirm_message">
+        <item quantity="one">This will remove %1$d rule.</item>
+        <item quantity="other">This will remove %1$d rules.</item>
     </plurals>
     <plurals name="home_banner_multiple">
         <item quantity="one">%1$d setup item needs attention</item>
@@ -319,4 +372,16 @@
         <item quantity="one">%1$d item needs attention</item>
         <item quantity="other">%1$d items need attention</item>
     </plurals>
+
+    <!-- App updates -->
+    <string name="update_notification_channel">App updates</string>
+    <string name="update_notification_title">WhisperType update available</string>
+    <string name="update_notification_text">Version %1$s is available. Tap to download.</string>
+    <string name="update_banner_message">WhisperType %1$s is available</string>
+    <string name="update_banner_action">Download</string>
+    <string name="settings_check_for_updates">Check for updates</string>
+    <string name="settings_update_available">Update available: %1$s · Tap to download</string>
+    <string name="settings_update_latest">You\'re on the latest version (%1$s)</string>
+    <string name="settings_checking_updates">Checking for updates…</string>
+    <string name="settings_update_check_failed">Couldn\'t check for updates</string>
 </resources>

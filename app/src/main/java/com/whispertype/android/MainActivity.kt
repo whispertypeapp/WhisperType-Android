@@ -55,6 +55,7 @@ import com.whispertype.android.data.settings.SettingsRepository
 import com.whispertype.android.platform.accessibility.SetupStatus
 import com.whispertype.android.platform.accessibility.WhisperTypeAccessibilityService
 import com.whispertype.android.platform.runtime.FlowRuntimeService
+import com.whispertype.android.platform.updates.AppUpdateChecker
 import com.whispertype.android.ui.dictionary.DictionaryScreen
 import com.whispertype.android.ui.history.HistoryScreen
 import com.whispertype.android.ui.home.HomeScreen
@@ -126,7 +127,6 @@ class MainActivity : ComponentActivity() {
                         overlayGranted = overlayGranted,
                         keyProvider = keyProvider,
                         hasMic = ::hasMicPermission,
-                        hasNotifications = ::hasNotificationPermission,
                         hasAccessibility = ::isAccessibilityEnabled,
                         onRequestOverlay = ::requestOverlayPermission,
                         onRequestMicNotifications = {
@@ -160,6 +160,9 @@ class MainActivity : ComponentActivity() {
         }
         lifecycleScope.launch {
             settingsRepository.historyRetentionDays.collect { cachedHistoryRetentionDays = it }
+        }
+        lifecycleScope.launch {
+            AppUpdateChecker.checkForUpdate(applicationContext)
         }
     }
 
@@ -226,11 +229,13 @@ class MainActivity : ComponentActivity() {
         onOpenAppInfo: () -> Unit,
     ) {
         var selectedTab by remember { mutableIntStateOf(0) }
+        val scope = rememberCoroutineScope()
         var openSystemPage by remember { mutableStateOf(false) }
         var settingsScrollToGemini by remember { mutableStateOf(false) }
         val historyEntries by historyRepository.events().collectAsState(initial = emptyList())
         val historyEnabled by settings.historyEnabled.collectAsState(initial = true)
         val appEnabled by settings.appEnabled.collectAsState(initial = true)
+        val updateRelease by AppUpdateChecker.latestRelease.collectAsState()
         val eligibility by produceState(initialValue = FlowRuntimeService.currentEligibility) {
             while (true) {
                 value = FlowRuntimeService.currentEligibility
@@ -356,10 +361,19 @@ class MainActivity : ComponentActivity() {
                         historyEnabled = historyEnabled,
                         entries = historyEntries,
                         setupBannerReasons = setupBannerReasons,
+                        updateRelease = updateRelease,
+                        onDownloadUpdate = { downloadUrl ->
+                            val intent = Intent(Intent.ACTION_VIEW, downloadUrl.toUri()).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            startActivity(intent)
+                        },
                         onSetupBannerTap = {
                             openSystemPage = true
                             selectedTab = 3
                         },
+                        onOpenHistory = { selectedTab = 1 },
+                        onEnableHistory = { scope.launch { settings.setHistoryEnabled(true) } },
                     )
                 }
             }

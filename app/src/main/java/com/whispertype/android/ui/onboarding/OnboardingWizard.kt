@@ -70,7 +70,6 @@ fun OnboardingWizard(
     overlayGranted: Boolean,
     keyProvider: KeyProvider,
     hasMic: () -> Boolean,
-    hasNotifications: () -> Boolean,
     hasAccessibility: () -> Boolean,
     onRequestOverlay: () -> Unit,
     onRequestMicNotifications: () -> Unit,
@@ -89,7 +88,6 @@ fun OnboardingWizard(
     }
     val accessibilityOn = remember(refresh) { hasAccessibility() }
     val micGranted = remember(refresh) { hasMic() }
-    val notificationsGranted = remember(refresh) { hasNotifications() }
     var attemptedAccessibility by remember { mutableStateOf(false) }
     var overlayRequested by remember { mutableStateOf(false) }
     var micRequested by remember { mutableStateOf(false) }
@@ -100,8 +98,8 @@ fun OnboardingWizard(
             step = OnboardingStep.Mic
         }
     }
-    LaunchedEffect(micGranted, notificationsGranted, refresh, step) {
-        if (step == OnboardingStep.Mic && micGranted && notificationsGranted && micRequested) {
+    LaunchedEffect(micGranted, refresh, step) {
+        if (step == OnboardingStep.Mic && micGranted && micRequested) {
             micRequested = false
             step = OnboardingStep.Accessibility
         }

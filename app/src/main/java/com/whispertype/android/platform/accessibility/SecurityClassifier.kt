@@ -2,7 +2,7 @@ package com.whispertype.android.platform.accessibility
 
 /**
  * Fail-closed classifier that decides whether the currently focused editor is
- * safe to insert dictation text into (editor eligibility requirements). Pure Kotlin
+ * safe to insert dictation text into (PRD FR-2 Eligibility, §16.4). Pure Kotlin
  * and fully unit-testable on a JVM host: it carries no Android runtime
  * dependency and publishes named constants for the relevant
  * `android.text.InputType` bit masks.

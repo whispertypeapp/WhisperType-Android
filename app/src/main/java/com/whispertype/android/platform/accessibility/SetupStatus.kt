@@ -29,7 +29,6 @@ object SetupStatus {
         )
         if (!overlayGranted) add(REASON_OVERLAY_NOT_GRANTED)
         if (!runtimeRunning) add(REASON_RUNTIME_NOT_RUNNING)
-        if (!notificationsGranted) add(REASON_NOTIFICATIONS_NOT_GRANTED)
     }
 
     /** All gates for Settings → System (includes setup + contextual, except
@@ -49,7 +48,6 @@ object SetupStatus {
         ),
         SystemGate("gemini_key", apiKeyConfigured),
         SystemGate("microphone", eligibility.microphoneGranted),
-        SystemGate("notifications", notificationsGranted),
     )
 
     data class SystemGate(val id: String, val on: Boolean)

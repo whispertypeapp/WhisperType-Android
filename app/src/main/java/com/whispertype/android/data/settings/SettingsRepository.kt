@@ -12,6 +12,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.whispertype.android.core.dictionary.DictionaryEntry
 import com.whispertype.android.core.model.AudioSourcePreference
 import com.whispertype.android.core.model.LanguageMode
+import com.whispertype.android.core.model.TranscriptionMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
@@ -35,6 +36,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) : Settin
 
     private object Keys {
         val speechMode = stringPreferencesKey("speech_mode")
+        val transcriptionMode = stringPreferencesKey("transcription_mode")
         val historyEnabled = booleanPreferencesKey("history_enabled")
         val historyRetentionDays = intPreferencesKey("history_retention_days")
         val appEnabled = booleanPreferencesKey(SettingsRepository.KEY_APP_ENABLED)
@@ -58,7 +60,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) : Settin
     override val speechMode: Flow<LanguageMode> =
         dataStore.data.map { prefs ->
             val stored = prefs[Keys.speechMode]
-            LanguageMode.entries.firstOrNull { it.name == stored } ?: LanguageMode.HINGLISH
+            LanguageMode.entries.firstOrNull { it.name == stored } ?: DEFAULT_SPEECH_MODE
+        }
+
+    override val transcriptionMode: Flow<TranscriptionMode> =
+        dataStore.data.map { prefs ->
+            TranscriptionMode.fromString(prefs[Keys.transcriptionMode])
         }
 
     override val historyEnabled: Flow<Boolean> =
@@ -126,6 +133,10 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) : Settin
         dataStore.edit { it[Keys.speechMode] = mode.name }
     }
 
+    suspend fun setTranscriptionMode(mode: TranscriptionMode) {
+        dataStore.edit { it[Keys.transcriptionMode] = mode.name }
+    }
+
     suspend fun setHistoryEnabled(enabled: Boolean) {
         dataStore.edit { it[Keys.historyEnabled] = enabled }
     }
@@ -153,14 +164,40 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) : Settin
     suspend fun addDictionaryEntry(entry: DictionaryEntry) {
         dataStore.edit { prefs ->
             val current = decodeDictionary(prefs[Keys.dictionary])
-            prefs[Keys.dictionary] = encodeDictionary(current.filterNot { it.match == entry.match } + entry)
+            prefs[Keys.dictionary] = encodeDictionary(
+                current.filterNot { it.match.equals(entry.match, ignoreCase = true) } + entry,
+            )
+        }
+    }
+
+    suspend fun updateDictionaryEntry(originalMatch: String, newEntry: DictionaryEntry) {
+        dataStore.edit { prefs ->
+            val current = decodeDictionary(prefs[Keys.dictionary])
+            val index = current.indexOfFirst { it.match.equals(originalMatch, ignoreCase = true) }
+            if (index >= 0) {
+                val mutable = current.filterIndexed { i, it ->
+                    i == index || !it.match.equals(newEntry.match, ignoreCase = true)
+                }.toMutableList()
+                val targetIndex = mutable.indexOfFirst { it.match.equals(originalMatch, ignoreCase = true) }
+                if (targetIndex >= 0) {
+                    mutable[targetIndex] = newEntry
+                } else {
+                    mutable.add(newEntry)
+                }
+                prefs[Keys.dictionary] = encodeDictionary(mutable)
+            } else {
+                val updated = current.filterNot { it.match.equals(newEntry.match, ignoreCase = true) } + newEntry
+                prefs[Keys.dictionary] = encodeDictionary(updated)
+            }
         }
     }
 
     suspend fun removeDictionaryEntry(match: String) {
         dataStore.edit { prefs ->
             val current = decodeDictionary(prefs[Keys.dictionary])
-            prefs[Keys.dictionary] = encodeDictionary(current.filterNot { it.match == match })
+            prefs[Keys.dictionary] = encodeDictionary(
+                current.filterNot { it.match.equals(match, ignoreCase = true) },
+            )
         }
     }
 
@@ -247,10 +284,14 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) : Settin
 
         /** Hotkey default: no modifier required. */
         const val DEFAULT_HOTKEY_MODIFIERS = 0
+
+        /** Default speech transcription mode is English. */
+        val DEFAULT_SPEECH_MODE = LanguageMode.ENGLISH
+        val DEFAULT_TRANSCRIPTION_MODE = TranscriptionMode.DEFAULT
         const val DEFAULT_RETENTION_DAYS = 30
         const val DEFAULT_AUTO_STOP_SECONDS = 60
         const val DEFAULT_BUBBLE_SIZE_DP = 38
-        const val MIN_BUBBLE_SIZE_DP = 24
+        const val MIN_BUBBLE_SIZE_DP = 12
         const val MAX_BUBBLE_SIZE_DP = 72
         const val DEFAULT_BUBBLE_OPACITY_PERCENT = 80
         const val MIN_BUBBLE_OPACITY_PERCENT = 10

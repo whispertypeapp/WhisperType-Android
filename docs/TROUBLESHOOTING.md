@@ -78,15 +78,16 @@ After a few seconds of idle (1-15 s, default 3 s), the bubble auto-minimizes int
 - If the microphone is revoked mid-session, WhisperType cancels the dictation immediately.
 - A mic start failure shows a typed error: `runtime_mic_permission`, `MIC_INIT`, or `MIC_READ`. If another app is using the microphone, close it first.
 
-## Notification permission
+## Notification permission & foreground service
 
-The recording notification is required while the microphone is active. If notifications were denied:
+Notification permission (`POST_NOTIFICATIONS`) is **optional**: declining or dismissing it does not block setup, does not fail system diagnostics, and does not prevent dictation.
 
-1. `Settings -> Apps -> WhisperType -> Notifications`.
-2. Enable notifications.
-3. Start a dictation and confirm the "WhisperType is listening" notification appears with Stop and Cancel actions.
+When notifications are permitted:
+- **Idle**: Ongoing silent notification `WhisperType bubble is ready` (`Your microphone turns on only when you tap the bubble.`).
+- **Recording**: Active notification `Recording dictation` (`WhisperType is using your microphone.`) with direct **Stop** and **Cancel** buttons.
+- **Finishing**: Transient notification `Finishing dictation` (`Your microphone is off.`) while text is finalized and inserted.
 
-Without the notification permission, the recording foreground service cannot show its notification while the microphone is active and dictation fails to start.
+If notification permission is turned off, Android may still display an active foreground service for WhisperType in Task Manager / Active Apps because the floating overlay runs in a foreground service. You can open Android notification settings at any time via `Settings → System → Notifications`.
 
 ## API key validation
 
@@ -100,7 +101,7 @@ Without the notification permission, the recording foreground service cannot sho
 
 - A transport failure while the session is active surfaces as `gemini_transport`; a session cancelled by network loss reports `NETWORK_FAILURE`. No retry happens mid-session — start a new dictation when connectivity returns.
 - Timeouts (`TIMEOUT`) mean the speech service did not respond in time; check your connection and try again.
-- **`The Gemini connection is too slow`** (`gemini_connection_too_slow`): the pre-ready audio buffer overflowed while the Live session was still waiting for `setupComplete`. This is a 10 s backstop (500 frames), not the primary connect timeout — if you still see it, check `SESSION DONE` for `overflow=true` and `warmClaimResult=` (a healthy tap should show `warmClaimResult=HIT overflow=false`). Retry after confirming network and API key.
+- **`The Gemini connection is too slow`** (`gemini_connection_too_slow`): the pre-ready audio buffer overflowed while the Live session was still waiting for `setupComplete`. Since 1.0.8 this is a 10 s backstop (500 frames), not the primary connect timeout — if you still see it, check `SESSION DONE` for `overflow=true` and `warmClaimResult=` (a healthy tap should show `warmClaimResult=HIT overflow=false`). Retry after confirming network and API key.
 - `FGS_START_DENIED` means Android refused to start the microphone foreground service. Check that the notification permission is granted, another app is not holding the mic, and the app is not in a restricted/stopped state.
 
 ## Secure fields never show the bubble
@@ -142,10 +143,9 @@ Android 13 is supported since 0.4.0 (minSdk 33). If the install is blocked:
 
 ## Permissions
 
-Both `RECORD_AUDIO` and `POST_NOTIFICATIONS` must be granted for dictation to start.
-
-- `Settings -> Apps -> WhisperType -> Permissions`, or tap the matching tiles on the Home tab and use Fix.
-- If either was denied, WhisperType cannot start the microphone foreground service (see `runtime_mic_permission` and the notification section above).
+- `RECORD_AUDIO` (microphone) is required for speech capture. It is requested during onboarding. If revoked, dictation cannot record and reports `runtime_mic_permission`.
+- `SYSTEM_ALERT_WINDOW` (overlay) is required to draw the floating mic bubble over other apps.
+- `POST_NOTIFICATIONS` is optional: declining it does not block onboarding, does not trigger a Home banner, and does not prevent dictation.
 
 ## History empty
 

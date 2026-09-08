@@ -8,7 +8,7 @@ import com.whispertype.android.core.model.ResultCandidate
 import com.whispertype.android.core.model.SessionId
 
 /**
- * Sole owner of the dictation session state machine.
+ * Sole owner of the dictation session state machine (PRD §8).
  *
  * The reducer serializes one [DictationCommand] at a time and holds the current
  * [DictationState] (exposed via [state]). It is intentionally stateful because

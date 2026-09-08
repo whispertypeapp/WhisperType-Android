@@ -359,14 +359,32 @@ class WarmLiveSessionManagerTest {
         assertEquals(1, raw.closeCalls)
     }
 
+    @Test
+    fun `claim misses when transcriptionMode does not match warm session`() = runTest {
+        val verbatimProfile = profile(transcriptionMode = "verbatim")
+        val smartProfile = profile(transcriptionMode = "smart")
+        val h = Harness()
+        val manager = h.managerFor(
+            scope = backgroundScope,
+            nowMs = { testScheduler.currentTime },
+        )
+
+        manager.onEligibilityChanged(isEligible = true, profile = verbatimProfile)
+        runCurrent()
+        val miss = assertIs<WarmSessionClaim.Miss>(manager.claim(smartProfile))
+        assertEquals(WarmSessionClaimMissReason.PROFILE_MISMATCH, miss.reason)
+    }
+
     private fun profile(
         language: LanguageMode = LanguageMode.ENGLISH,
+        transcriptionMode: String = "verbatim",
         credentialRevision: Long = 1L,
     ): WarmSessionProfile =
         WarmSessionProfile(
             model = "gemini-live-test",
             apiVersion = "v1beta",
             language = language,
+            transcriptionMode = transcriptionMode,
             automaticActivityDetectionDisabled = true,
             inputAudioTranscription = true,
             credentialRevision = credentialRevision,

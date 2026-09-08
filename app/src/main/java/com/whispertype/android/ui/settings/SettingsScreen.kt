@@ -1,8 +1,12 @@
 package com.whispertype.android.ui.settings
 
+import android.content.Intent
 import android.media.AudioManager
+import android.net.Uri
+import android.provider.Settings as AndroidSettings
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
+import androidx.core.net.toUri
 import androidx.annotation.StringRes
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,9 +42,11 @@ import com.whispertype.android.core.audio.AudioInputSelection
 import com.whispertype.android.core.model.AudioSourcePreference
 import com.whispertype.android.core.model.HotkeyShortcut
 import com.whispertype.android.core.model.LanguageMode
+import com.whispertype.android.core.model.TranscriptionMode
 import com.whispertype.android.data.secrets.KeyProvider
 import com.whispertype.android.data.settings.SettingsRepository
 import com.whispertype.android.platform.accessibility.SetupStatus
+import com.whispertype.android.platform.updates.AppUpdateChecker
 import com.whispertype.android.ui.theme.StudioColors
 import com.whispertype.android.ui.theme.StudioCta
 import com.whispertype.android.ui.theme.StudioGhostCta
@@ -90,6 +96,7 @@ fun SettingsScreen(
             onOpen = { page = it },
         )
         SettingsPage.Speech -> SpeechPage(settings) { page = SettingsPage.Main }
+        SettingsPage.TranscriptionMode -> TranscriptionModePage(settings) { page = SettingsPage.Main }
         SettingsPage.AutoStop -> AutoStopPage(settings) { page = SettingsPage.Main }
         SettingsPage.Microphone -> MicrophonePage(settings) { page = SettingsPage.Main }
         SettingsPage.Hotkey -> HotkeyPage(settings) { page = SettingsPage.Main }
@@ -101,7 +108,7 @@ fun SettingsScreen(
 }
 
 private enum class SettingsPage {
-    Main, System, Speech, AutoStop, Microphone, Hotkey, Bubble, MiniDot, Gemini, History
+    Main, System, Speech, TranscriptionMode, AutoStop, Microphone, Hotkey, Bubble, MiniDot, Gemini, History
 }
 
 @Composable
@@ -112,8 +119,11 @@ private fun SettingsMainScreen(
     onOpen: (SettingsPage) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val appEnabled by settings.appEnabled.collectAsStateWithLifecycle(initialValue = true)
     val speechMode by settings.speechMode.collectAsStateWithLifecycle(initialValue = LanguageMode.ENGLISH)
+    val transcriptionMode by settings.transcriptionMode
+        .collectAsStateWithLifecycle(initialValue = SettingsRepository.DEFAULT_TRANSCRIPTION_MODE)
     val autoStopSeconds by settings.autoStopSeconds
         .collectAsStateWithLifecycle(initialValue = SettingsRepository.DEFAULT_AUTO_STOP_SECONDS)
     val segmentAtSilence by settings.segmentAtSilence.collectAsStateWithLifecycle(initialValue = false)
@@ -172,6 +182,18 @@ private fun SettingsMainScreen(
                     },
                 ),
                 onClick = { onOpen(SettingsPage.Speech) },
+            )
+            SettingsDivider()
+            SettingsNavRow(
+                title = stringResource(R.string.settings_transcription_mode),
+                subtitle = stringResource(
+                    if (transcriptionMode == TranscriptionMode.SMART) {
+                        R.string.transcription_mode_smart
+                    } else {
+                        R.string.transcription_mode_verbatim
+                    },
+                ),
+                onClick = { onOpen(SettingsPage.TranscriptionMode) },
             )
             SettingsDivider()
             SettingsNavRow(
@@ -258,6 +280,71 @@ private fun SettingsMainScreen(
             )
             SettingsDivider()
             SettingsNavRow(
+                title = stringResource(R.string.settings_notifications_row),
+                subtitle = stringResource(R.string.settings_notifications_row_desc),
+                onClick = {
+                    try {
+                        val intent = Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    } catch (_: Throwable) {
+                        val fallback = Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(fallback)
+                    }
+                },
+            )
+            SettingsDivider()
+            var checkingUpdates by remember { mutableStateOf(false) }
+            val latestRelease by AppUpdateChecker.latestRelease.collectAsStateWithLifecycle()
+            val updateFailedMessage = stringResource(R.string.settings_update_check_failed)
+            val updateLatestMessage = stringResource(R.string.settings_update_latest, BuildConfig.VERSION_NAME)
+            SettingsNavRow(
+                title = stringResource(R.string.settings_check_for_updates),
+                subtitle = when {
+                    checkingUpdates -> stringResource(R.string.settings_checking_updates)
+                    latestRelease != null && latestRelease!!.isNewerThanCurrent ->
+                        stringResource(R.string.settings_update_available, latestRelease!!.tagName)
+                    else -> updateLatestMessage
+                },
+                onClick = {
+                    val currentUpdate = latestRelease
+                    if (currentUpdate != null && currentUpdate.isNewerThanCurrent) {
+                        val intent = Intent(Intent.ACTION_VIEW, currentUpdate.downloadUrl.toUri()).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    } else {
+                        checkingUpdates = true
+                        scope.launch {
+                            val result = AppUpdateChecker.checkForUpdate(context, force = true)
+                            checkingUpdates = false
+                            if (result != null && result.isNewerThanCurrent) {
+                                val intent = Intent(Intent.ACTION_VIEW, result.downloadUrl.toUri()).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
+                            } else if (result == null) {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    updateFailedMessage,
+                                    android.widget.Toast.LENGTH_SHORT,
+                                ).show()
+                            } else {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    updateLatestMessage,
+                                    android.widget.Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                    }
+                },
+            )
+            SettingsDivider()
+            SettingsNavRow(
                 title = stringResource(R.string.settings_about),
                 subtitle = BuildConfig.VERSION_NAME,
                 showChevron = false,
@@ -284,6 +371,44 @@ private fun SpeechPage(settings: SettingsRepository, onBack: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TranscriptionModePage(settings: SettingsRepository, onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val transcriptionMode by settings.transcriptionMode
+        .collectAsStateWithLifecycle(initialValue = SettingsRepository.DEFAULT_TRANSCRIPTION_MODE)
+    SettingsDrillScaffold(title = stringResource(R.string.settings_transcription_mode), onBack = onBack) {
+        SettingsGroupCard {
+            TranscriptionMode.entries.forEachIndexed { index, mode ->
+                if (index > 0) SettingsDivider()
+                SettingsNavRow(
+                    title = stringResource(
+                        if (mode == TranscriptionMode.SMART) {
+                            R.string.transcription_mode_smart
+                        } else {
+                            R.string.transcription_mode_verbatim
+                        },
+                    ),
+                    subtitle = stringResource(
+                        if (mode == TranscriptionMode.SMART) {
+                            R.string.transcription_mode_smart_desc
+                        } else {
+                            R.string.transcription_mode_verbatim_desc
+                        },
+                    ),
+                    value = if (transcriptionMode == mode) stringResource(R.string.status_on) else null,
+                    showChevron = false,
+                    onClick = { scope.launch { settings.setTranscriptionMode(mode) } },
+                )
+            }
+        }
+        Text(
+            text = stringResource(R.string.settings_transcription_mode_why),
+            style = StudioType.why,
+            modifier = Modifier.padding(top = 12.dp, start = 4.dp),
+        )
     }
 }
 
@@ -418,7 +543,7 @@ private fun BubblePage(settings: SettingsRepository, onBack: () -> Unit) {
         SettingsGroupCard {
             StudioSliderRow(
                 title = stringResource(R.string.settings_bubble_size_friendly),
-                description = bubbleSizeLabel(bubbleSizeDp),
+                description = "${bubbleSizeLabel(bubbleSizeDp)} · $bubbleSizeDp dp",
                 value = bubbleSizeDp.toFloat(),
                 range = BUBBLE_SIZE_RANGE_DP_F,
                 onValueChange = { scope.launch { settings.setBubbleSizeDp(it.roundToInt()) } },
@@ -578,8 +703,10 @@ private val AUTO_STOP_OPTIONS: List<Int> = listOf(15, 30, 60, 120, 300)
 private val RETENTION_RANGE_DAYS_F: ClosedFloatingPointRange<Float> = 7f..90f
 
 private fun bubbleSizeLabel(dp: Int): String = when {
-    dp <= 30 -> "Small"
-    dp <= 44 -> "Medium"
+    dp <= 16 -> "Tiny"
+    dp <= 24 -> "Extra small"
+    dp <= 34 -> "Small"
+    dp <= 48 -> "Medium"
     else -> "Large"
 }
 

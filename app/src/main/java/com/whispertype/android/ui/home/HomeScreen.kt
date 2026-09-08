@@ -1,7 +1,5 @@
 package com.whispertype.android.ui.home
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +7,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -22,16 +21,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.whispertype.android.R
 import com.whispertype.android.data.history.HistoryRepository
-import com.whispertype.android.data.history.HistoryStats
 import com.whispertype.android.platform.accessibility.EligibilityExplanation
 import com.whispertype.android.platform.accessibility.SetupStatus
 import com.whispertype.android.ui.theme.StudioColors
+import com.whispertype.android.ui.theme.StudioLayout
 import com.whispertype.android.ui.theme.StudioType
 import com.whispertype.android.ui.theme.WhisperTypeTheme
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -40,137 +39,134 @@ fun HomeScreen(
     setupBannerReasons: List<String>,
     onSetupBannerTap: () -> Unit,
     modifier: Modifier = Modifier,
+    updateRelease: com.whispertype.android.core.updates.AppReleaseInfo? = null,
+    onDownloadUpdate: (String) -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    onEnableHistory: () -> Unit = {},
 ) {
     val now = remember { System.currentTimeMillis() }
     val greeting = rememberHomeGreeting(now)
     val dateLabel = rememberDateLabel(now)
-    val hasStats = historyEnabled && entries.isNotEmpty()
+
+    val fmtLocale: Locale = LocalConfiguration.current.locales[0]
+    val todayLabel = stringResource(R.string.history_day_today)
+    val insertedLabel = stringResource(R.string.history_outcome_inserted)
+    val copiedLabel = stringResource(R.string.history_outcome_copied)
 
     Surface(modifier = modifier.fillMaxSize(), color = StudioColors.Background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = StudioLayout.GutterHorizontal, vertical = 16.dp),
         ) {
-            Text(text = dateLabel, style = StudioType.greet, modifier = Modifier.padding(top = 6.dp))
+            Text(text = dateLabel, style = StudioType.greet)
+            Spacer(Modifier.height(2.dp))
             Text(text = greeting, style = StudioType.greeting)
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(StudioLayout.SpacingSection))
+
+            if (updateRelease != null && updateRelease.isNewerThanCurrent) {
+                UpdateBanner(
+                    versionName = updateRelease.tagName,
+                    onClick = { onDownloadUpdate(updateRelease.downloadUrl) },
+                )
+                Spacer(Modifier.height(StudioLayout.SpacingRelated))
+            }
 
             if (setupBannerReasons.isNotEmpty()) {
                 SetupBanner(
                     message = setupBannerMessage(setupBannerReasons),
                     actionLabel = stringResource(R.string.status_fix),
                     onClick = onSetupBannerTap,
-                    modifier = Modifier.padding(bottom = 12.dp),
                 )
+                Spacer(Modifier.height(StudioLayout.SpacingRelated))
             }
 
-            if (hasStats) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    val weekWords = HistoryStats.weekWords(entries, now)
-                    val sessions = HistoryStats.sessions(entries)
-                    val wpm = HistoryStats.wordsPerMinute(entries)?.roundToInt()
-                    val perSession = HistoryStats.wordsPerSession(entries)
-                    val weekSessions = entries.count { it.timestampMillis >= now - 7 * 86_400_000L }
-                    val heroSub = if (wpm != null) {
-                        pluralStringResource(R.plurals.home_hero_week_wpm, weekSessions, weekSessions, wpm)
-                    } else {
-                        pluralStringResource(R.plurals.home_hero_week_sub, weekSessions, weekSessions)
+            if (!historyEnabled) {
+                HistoryOffCard(
+                    onEnableHistory = onEnableHistory,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(StudioLayout.GutterBottom))
+            } else {
+                val barsState = remember(entries, now) {
+                    HomeHelpers.computeWeeklyBarsState(entries, now)
+                }
+
+                val heroSub = when {
+                    barsState.weekSessions == 0 -> {
+                        stringResource(R.string.home_hero_no_sessions_week)
                     }
-                    HeroCard(
-                        heroLabel = stringResource(R.string.home_hero_week_label),
-                        heroValue = formatCount(weekWords),
-                        heroSub = heroSub,
-                        dailyWords = HistoryStats.dailyWords(entries, now),
-                        modifier = Modifier.weight(1f),
-                    )
+                    barsState.weekWpm != null -> {
+                        pluralStringResource(
+                            R.plurals.home_hero_week_wpm,
+                            barsState.weekSessions,
+                            barsState.weekSessions,
+                            barsState.weekWpm,
+                        )
+                    }
+                    else -> {
+                        pluralStringResource(
+                            R.plurals.home_hero_week_sub,
+                            barsState.weekSessions,
+                            barsState.weekSessions,
+                        )
+                    }
+                }
+
+                WeeklyHeroCard(
+                    weekWords = HomeHelpers.formatCount(barsState.weekWords),
+                    contextLine = heroSub,
+                    barsState = barsState,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(StudioLayout.SpacingSection))
+
+                val glanceMetrics = remember(entries) {
+                    HomeHelpers.computeGlanceMetrics(entries)
+                }
+                AtAGlanceSection(
+                    metrics = glanceMetrics,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(24.dp))
+
+                if (entries.isEmpty()) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        MetricChip(
-                            label = stringResource(R.string.home_stats_sessions),
-                            value = sessions.toString(),
-                            modifier = Modifier.weight(1f),
-                        )
-                        MetricChip(
-                            label = stringResource(R.string.home_stats_wpm),
-                            value = wpm?.toString() ?: "—",
-                            modifier = Modifier.weight(1f),
-                        )
-                        MetricChip(
-                            label = stringResource(R.string.home_stats_per_session),
-                            value = perSession.toString(),
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    RecentSection(
-                        entries = entries.take(2),
-                        nowMillis = now,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    HeroEmptyCard(
-                        title = stringResource(R.string.home_empty_title),
-                        body = stringResource(R.string.home_empty_body),
+                            .padding(bottom = StudioLayout.SpacingInside),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_recent_title).uppercase(),
+                            style = StudioType.heroLabel,
+                        )
+                    }
+                    RecentEmptyCard(modifier = Modifier.fillMaxWidth())
+                } else {
+                    val recentSnippets = remember(entries, now, fmtLocale) {
+                        entries.take(2).map { entry ->
+                            val meta = HomeHelpers.formatRecentSnippetMeta(
+                                entry = entry,
+                                nowMillis = now,
+                                todayLabel = todayLabel,
+                                insertedLabel = insertedLabel,
+                                copiedLabel = copiedLabel,
+                                locale = fmtLocale,
+                            )
+                            entry.text to meta
+                        }
+                    }
+                    RecentSection(
+                        snippets = recentSnippets,
+                        onOpenHistory = onOpenHistory,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                Spacer(Modifier.height(StudioLayout.GutterBottom))
             }
         }
     }
-}
-
-@Composable
-private fun RecentSection(
-    entries: List<HistoryRepository.HistoryEntry>,
-    nowMillis: Long,
-    modifier: Modifier = Modifier,
-) {
-    val fmtLocale: Locale = LocalConfiguration.current.locales[0]
-    val timeFmt = remember(fmtLocale) { SimpleDateFormat("h:mm a", fmtLocale) }
-    val startOfToday = HistoryStats.startOfTodayMillis(nowMillis)
-    val todayLabel = stringResource(R.string.history_day_today)
-    RecentCard(
-        modifier = modifier,
-        title = stringResource(R.string.home_recent_title),
-        snippets = entries.map { entry ->
-            val whenLabel = if (entry.timestampMillis >= startOfToday) {
-                todayLabel
-            } else {
-                SimpleDateFormat("MMM d", fmtLocale).format(Date(entry.timestampMillis))
-            }
-            val outcome = when (entry.outcome) {
-                "Success" -> stringResource(R.string.history_outcome_inserted)
-                "CopiedToClipboard", "CopyAvailable" -> stringResource(R.string.history_outcome_copied)
-                else -> null
-            }
-            val meta = buildString {
-                append(whenLabel)
-                append(" · ")
-                append(timeFmt.format(Date(entry.timestampMillis)).lowercase(fmtLocale))
-                if (outcome != null) {
-                    append(" · ")
-                    append(outcome)
-                }
-            }
-            entry.text to meta
-        },
-    )
 }
 
 @Composable
@@ -197,19 +193,11 @@ private fun setupBannerMessage(reasons: List<String>): String {
     }
 }
 
-private fun formatCount(n: Int): String =
-    if (n >= 1000) {
-        val k = n / 1000f
-        if (k >= 10) "${k.roundToInt()}k" else String.format(Locale.US, "%.1fk", k)
-    } else {
-        n.toString()
-    }
-
 @Composable
 private fun rememberHomeGreeting(nowMillis: Long): String {
-    val cal = java.util.Calendar.getInstance()
+    val cal = Calendar.getInstance()
     cal.timeInMillis = nowMillis
-    val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+    val hour = cal.get(Calendar.HOUR_OF_DAY)
     return stringResource(
         when (hour) {
             in 5..11 -> R.string.home_greeting_morning
@@ -264,10 +252,42 @@ private fun HomeHealthyPreview() {
 
 @Preview(showBackground = true, backgroundColor = 0xFF10100E, widthDp = 360, heightDp = 720)
 @Composable
+private fun HomeOneItemPreview() {
+    WhisperTypeTheme {
+        HomeScreen(
+            historyEnabled = true,
+            entries = listOf(
+                previewEntry(
+                    text = "Ship the build to internal testers tonight.",
+                    minutesAgo = 12L,
+                    durationMs = 15_000L,
+                ),
+            ),
+            setupBannerReasons = emptyList(),
+            onSetupBannerTap = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF10100E, widthDp = 360, heightDp = 720)
+@Composable
 private fun HomeEmptyPreview() {
     WhisperTypeTheme {
         HomeScreen(
             historyEnabled = true,
+            entries = emptyList(),
+            setupBannerReasons = emptyList(),
+            onSetupBannerTap = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF10100E, widthDp = 360, heightDp = 720)
+@Composable
+private fun HomeHistoryOffPreview() {
+    WhisperTypeTheme {
+        HomeScreen(
+            historyEnabled = false,
             entries = emptyList(),
             setupBannerReasons = emptyList(),
             onSetupBannerTap = {},

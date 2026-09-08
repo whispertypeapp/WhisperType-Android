@@ -81,7 +81,7 @@ All paths are under `app/src/main/java/com/whispertype/android/`.
 4. On stop/finalize, the coordinator settles the transcript from the session
    accumulator: the transcribe model's committed final segments
    (`inputTranscription`) and revisable partials (`interimInputTranscription`)
-   are the only dictation source (no echo channel), a 250 ms
+   are the only dictation source (0.10.0 — the echo channel is gone), a 250 ms
    quiet window plus one 2.5 s tail backstop end settlement, and a fragment
    guard refuses a truncated transcript. Text shaping runs server-side in the
    model's `smart` mode. It then applies `DictionaryCorrections` and sends an
@@ -94,7 +94,9 @@ All paths are under `app/src/main/java/com/whispertype/android/`.
 ## Further reading
 
 - **`docs/GEMINI_LIVE.md`** — the Gemini Live voice engine: wire protocol, prompt,
-  session/settlement state machines, the reliability findings, and the
+  session/settlement state machines, the 0.4.2 reliability findings, and the
   exact wire mechanics reference.
 - **`docs/TESTING.md`** — unit-test inventory, device matrix, and the on-device
   acceptance protocol.
+- **`docs/PUSH_TO_PHONE_VIA_ADB.md`** — pushing the build to the phone over
+  wireless ADB (Tailscale).

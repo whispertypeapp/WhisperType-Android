@@ -16,11 +16,13 @@ object DictionaryCorrections {
      */
     fun apply(text: String, entries: List<DictionaryEntry>): String {
         if (text.isEmpty() || entries.isEmpty()) return text
+        val validEntries = entries.filter { it.match.isNotBlank() && it.replace.isNotBlank() }
+        if (validEntries.isEmpty()) return text
 
         val result = StringBuilder(text.length)
         var index = 0
         while (index < text.length) {
-            val entry = entries
+            val entry = validEntries
                 .filter { matchesAt(text, index, it) }
                 .maxByOrNull { it.match.length }
             if (entry == null) {

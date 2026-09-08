@@ -39,6 +39,7 @@ data class WarmSessionProfile(
     val model: String,
     val apiVersion: String,
     val language: LanguageMode,
+    val transcriptionMode: String = "smart",
     val automaticActivityDetectionDisabled: Boolean,
     val activityHandlingNoInterruption: Boolean = false,
     val inputAudioTranscription: Boolean,
@@ -47,6 +48,7 @@ data class WarmSessionProfile(
     init {
         require(model.isNotBlank()) { "model must not be blank" }
         require(apiVersion.isNotBlank()) { "apiVersion must not be blank" }
+        require(transcriptionMode.isNotBlank()) { "transcriptionMode must not be blank" }
         require(credentialRevision >= 0L) { "credentialRevision must not be negative" }
     }
 }

@@ -95,7 +95,7 @@ fun audioSourceFactory(
 }
 
 /**
- * A headset-mic capture source. A bluetooth headset's microphone is only
+ * A headset-mic capture source (0.6.0). A bluetooth headset's microphone is only
  * exposed as an input device while a SCO connection is active, so this source
  * opens one: it enters [AudioManager.MODE_IN_COMMUNICATION], requests SCO, waits
  * briefly for the headset's input device to appear, and pins the recording to it

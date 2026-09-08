@@ -1,7 +1,7 @@
 package com.whispertype.android.core.model
 
 /**
- * Session state machine: Unavailable -> Idle -> Starting -> Listening
+ * Session state machine (PRD §8): Unavailable -> Idle -> Starting -> Listening
  * -> Finalizing -> Inserting -> Success, with Cancelled / Error / CopyAvailable
  * branches. All id-bearing states carry the canonical [SessionId].
  *

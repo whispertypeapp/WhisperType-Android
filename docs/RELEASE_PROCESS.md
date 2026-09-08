@@ -12,8 +12,8 @@ defaultConfig {
     applicationId = "com.whispertype.android"
     minSdk = 33
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0.0"
+    versionCode = 66
+    versionName = "1.2.0"
 }
 ```
 
@@ -26,14 +26,14 @@ The release keystore is the single artifact that must never enter the repository
 1. Create the keystore once, outside the repo, and back it up securely:
 
 ```powershell
-keytool -genkeypair -v -keystore C:\secure\... `
+keytool -genkeypair -v -keystore C:\secure\whispertype-release.keystore `
   -alias whispertype -keyalg RSA -keysize 2048 -validity 10000
 ```
 
 2. Create `signing.properties` at the repository root (never commit it; add it to `.gitignore`):
 
 ```text
-storeFile=C:/secure/...
+storeFile=C:/secure/whispertype-release.keystore
 storePassword=<store password>
 keyAlias=whispertype
 keyPassword=<key password>
@@ -87,58 +87,61 @@ APK, so testers download one checksummed artifact (see `docs/TESTING.md`).
 
 | | **Git tag** | **GitHub Release** |
 | --- | --- | --- |
-| What it is | A permanent label on a git commit (`v1.0.0`) | A GitHub page with notes + downloadable APK assets |
+| What it is | A permanent label on a git commit (`v1.0.8`) | A GitHub page with notes + downloadable APK assets |
 | Where it lives | Git history (local + remote) | github.com/…/releases |
 | Required? | Yes — every published version must be tagged | Yes — every user-facing APK must have a release |
-| Naming | Always `v` + semver: `v1.0.0` | Title without `v`: `1.0.0` |
+| Naming | Always `v` + semver: `v1.0.8` | Title without `v`: `1.0.8` |
 
-**Tag rule:** every installable `v*` tag on `main` should have a matching
+**Cleanup rule:** every installable `v*` tag on `main` should have a matching
 GitHub Release with an APK. Delete orphan tags (tagged but never released and
 superseded by a later release) so the tag list matches the release list.
 
 1. **Tag the release** on `main` with an annotated tag and push branch + tag:
 
    ```bash
-    git tag -a v1.0.0 -m "release(1.0.0): <one-line summary>"
-    git push origin main
-    git push origin v1.0.0
+   git tag -a v1.0.8 -m "release(1.0.8): <one-line summary>"
+   git push origin main
+   git push origin v1.0.8
    ```
 
 2. **Create the release and attach the APK.** With the GitHub CLI:
 
    ```bash
-    gh release create v1.0.0 \
-      --title "1.0.0" \
-      --notes-file CHANGELOG.md \
-      app/build/outputs/apk/release/app-release.apk#app-release.apk
-    ```
+   gh release create v1.0.8 \
+     --title "1.0.8" \
+     --notes-file CHANGELOG.md \
+     app/build/outputs/apk/release/app-release.apk#app-release.apk
+   ```
 
-    or over the REST API with a personal access token:
+   or over the REST API with a personal access token (the `origin` remote of
+   this repo already embeds one; never print it, and keep it out of logs and
+   commit messages):
 
-    ```bash
-    curl -X POST -H "Authorization: token <TOKEN>" -H "Accept: application/vnd.github+json" \
-      https://api.github.com/repos/whispertypeapp/WhisperType-Android/releases \
-      -d '{"tag_name":"v1.0.0","name":"1.0.0","body":"<release notes>"}'
-    # upload the asset (replace <id> with the "id" from the create response):
-    curl -X POST -H "Authorization: token <TOKEN>" \
-      -H "Content-Type: application/octet-stream" \
-      --data-binary @app/build/outputs/apk/release/app-release.apk \
-      "https://uploads.github.com/repos/whispertypeapp/WhisperType-Android/releases/<id>/assets?name=app-release.apk"
-    ```
+   ```bash
+   curl -X POST -H "Authorization: token <TOKEN>" -H "Accept: application/vnd.github+json" \
+     https://api.github.com/repos/<owner>/<repo>/releases \
+     -d '{"tag_name":"v1.0.8","name":"1.0.8","body":"<release notes>"}'
+   # upload the asset (replace <id> with the "id" from the create response):
+   curl -X POST -H "Authorization: token <TOKEN>" \
+     -H "Content-Type: application/octet-stream" \
+     --data-binary @app/build/outputs/apk/release/app-release.apk \
+     "https://uploads.github.com/repos/<owner>/<repo>/releases/<id>/assets?name=app-release.apk"
+   ```
 
 3. **Share link** — download link for the published release:
 
-    `https://github.com/whispertypeapp/WhisperType-Android/releases/download/<tag>/app-release.apk`
+   `https://github.com/<owner>/<repo>/releases/download/<tag>/app-release.apk`
 
-    The repository is public; the release link works anonymously.
+   The repository is public, so the link is accessible directly for automatic
+   and browser downloads without requiring authentication.
 
 4. **Verify the upload** — GitHub records the SHA-256 of every uploaded asset.
    Compare it against the local build (and the checksum from the Checksum
    generation section) via the asset endpoint:
 
    ```bash
-    curl -s -H "Authorization: token <TOKEN>" \
-      https://api.github.com/repos/whispertypeapp/WhisperType-Android/releases/assets/<asset-id> \
+   curl -s -H "Authorization: token <TOKEN>" \
+     https://api.github.com/repos/<owner>/<repo>/releases/assets/<asset-id> \
    # the "digest" field (sha256:…) must equal `sha256sum app-release.apk`
    ```
 
@@ -163,7 +166,7 @@ The scripts must stop on errors, quote Windows paths safely, never default to ev
 
 Before shipping a new version:
 
-1. Install the released version and complete onboarding.
+1. Install the previous version and complete onboarding.
 2. Install the new version with `adb install -r` (upgrade path, no data wipe).
 3. Verify: app opens, onboarding state is preserved, Accessibility Service stays enabled, API key still present and usable, dock appears over a supported keyboard, one dictation inserts correctly, and history (if enabled) is retained.
 4. Also verify a clean install on a fresh device: onboarding completes, permissions request in order, and the first dictation works.
