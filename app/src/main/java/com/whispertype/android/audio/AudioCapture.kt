@@ -360,7 +360,7 @@ class AudioCapture(
         }
 
         /**
-         * Builds a mono, 16-bit, 16 kHz [AudioRecord]-backed source pinned
+         * 0.6.0: builds a mono, 16-bit, 16 kHz [AudioRecord]-backed source pinned
          * to a specific input [device] (e.g. a connected bluetooth headset), or
          * null when the device cannot be initialized. Uses the
          * [MediaRecorder.AudioSource.VOICE_COMMUNICATION] source so the system

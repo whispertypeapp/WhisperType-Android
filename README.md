@@ -1,112 +1,183 @@
 <p align="center">
-  <img src="docs/screenshots/gallery/01-hero.png" alt="WhisperType — keep your keyboard" width="720" />
+  <img src="app-logo.png" width="132" height="132" alt="WhisperType App Logo" style="border-radius: 28px;" />
 </p>
 
-# WhisperType
+<h1 align="center">WhisperType</h1>
 
-**Free Wispr Flow alternative for Android** — keep your keyboard, dictate with **Gemini Live** via your own [Google AI Studio](https://aistudio.google.com/) key. Open source. **$0**. No WhisperType subscription or servers.
+<p align="center">
+  <b>Fast, Private, System-Wide AI Voice-to-Text for Android</b><br>
+  <i>Powered by Google Gemini Live (<code>gemini-3.5-transcribe-live</code>)</i>
+</p>
 
-> **Tradeoff (honest):** when you dictate, audio goes to Google under *your* AI Studio key. WhisperType does not run a middleman backend.
+<p align="center">
+  <a href="https://github.com/chaosmanage/WhisperType-Android/releases/latest"><img src="https://img.shields.io/github/v/release/chaosmanage/WhisperType-Android?label=Release&color=07695D&style=flat-square" alt="Latest Release"></a>
+  <img src="https://img.shields.io/badge/Platform-Android%2013%2B%20(API%2033%2B)-0E8388?style=flat-square" alt="Android 13+">
+  <img src="https://img.shields.io/badge/Model-gemini--3.5--transcribe--live-4285F4?style=flat-square" alt="Gemini Live">
+  <img src="https://img.shields.io/badge/Privacy-100%25%20Local--First-2EA043?style=flat-square" alt="Local First">
+</p>
 
-[![Android](https://img.shields.io/badge/Android-13%2B%20(API%2033)-3DDC84?logo=android&logoColor=white)](#requirements)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/whispertypeapp/WhisperType-Android/releases/tag/v1.0.0)
-[![GitHub](https://img.shields.io/badge/github-whispertypeapp%2FWhisperType--Android-181717?logo=github)](https://github.com/whispertypeapp/WhisperType-Android)
+<p align="center">
+  <a href="https://github.com/chaosmanage/WhisperType-Android/releases/latest/download/app-release.apk">
+    <img src="https://img.shields.io/badge/📥_Download_Release_APK-v1.2.3-07695D?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+  </a>
+</p>
+
+<p align="center">
+  <img src="whispertype-banner.jpg" alt="WhisperType Showcase Banner" width="100%" style="border-radius: 16px;" />
+</p>
 
 ---
 
-## What it is
+Voice to text for Android that keeps your favorite keyboard. WhisperType floats an elegant, draggable microphone bubble above any text field—in Messages, WhatsApp, Gmail, Slack, Notes, browser, or any Android app—and streams your speech directly to Google's Gemini Live API for instant, structured cursor insertion.
 
-WhisperType is an open-source **Android voice-to-text** app that **keeps your normal keyboard**. A floating mic / bubble overlays your screen and inserts transcription **at the cursor** in Messages, Gmail, Notes, WhatsApp, and other focused fields — you do **not** swap to a voice IME.
+> **Private by design:** WhisperType is 100% local-first. Your Gemini API key is encrypted on-device with an Android Keystore AES-GCM-256 key. Transcripts and audio are never logged or sent to any third-party server. There is no WhisperType account, no analytics, and no tracking.
 
-- **BYO Gemini key only** — Gemini Live (`gemini-3.5-transcribe-live`); **no** on-device / dual-mode path  
-- **No WhisperType cloud account** — key saved on device  
-- **Hinglish**, custom **Dictionary** (spoken → written), **History**, overlay bubble + **Grave (`` ` ``)** shortcut  
+---
 
-<p align="center">
-  <img src="docs/screenshots/gallery/02-home-v2.jpg" alt="Home (dark UI v2)" width="200" />
-  <img src="docs/screenshots/gallery/03-overlay-keep-keyboard.jpg" alt="Keep your keyboard overlay" width="200" />
-  <img src="docs/screenshots/gallery/09-trust.png" alt="Trust — OSS $0 no middleman" width="200" />
-</p>
+## ⚡ How It Works
 
-## Quick start
-
-1. Install `WhisperType-Android-1.0.0.apk` from [Releases v1.0.0](https://github.com/whispertypeapp/WhisperType-Android/releases/tag/v1.0.0).  
-2. Grant mic, overlay, accessibility, and notifications as prompted.  
-3. **Settings** → paste your **Gemini API key** from [AI Studio](https://aistudio.google.com/).  
-4. Focus any text field → tap the bubble (or Grave `` ` ``) → speak.
-
-## Gemini BYOK
-
-WhisperType does **not** sell API access or proxy transcription through WhisperType servers.
-
-### Honest limits
-
-- AI Studio **Free** tier is $0 but **rate-limited** (RPM / TPM / RPD) — not unlimited  
-- Long sessions may hit Google continuous-session caps (~10 minutes class)  
-- Free-tier data handling follows **Google’s** terms — check current AI Studio policy  
-- Higher quotas → enable billing on the **Google** side  
-
-Privacy footnote: **No WhisperType servers.** We do **not** claim to be more private than other cloud STT.
-
-## Gallery
-
-<p align="center">
-  <img src="docs/screenshots/gallery/04-hinglish.jpg" alt="Hinglish speech mode" width="160" />
-  <img src="docs/screenshots/gallery/05-dictionary-add.jpg" alt="Dictionary add" width="160" />
-  <img src="docs/screenshots/gallery/06-gemini-key-entry.jpg" alt="Gemini key entry" width="160" />
-  <img src="docs/screenshots/gallery/07-gemini-key-saved.jpg" alt="Key saved on device" width="160" />
-  <img src="docs/screenshots/gallery/08-about-1.1.7.jpg" alt="About / Status" width="160" />
-</p>
-
-Curated set only — see `docs/screenshots/gallery/`. Full UI dumps live under `docs/screenshots/ui-v2/` etc. for maintainers, not the landing page.
-
-
-## vs Wispr Flow / Typeless
-
-| | WhisperType | Wispr Flow | Typeless |
-|--|-------------|------------|----------|
-| Keyboard | **Keep yours** + floating mic | Their flow | Voice IME / replaces keyboard |
-| Cost | App **$0**; Google bill only if you leave free tier | SaaS | Their pricing |
-| Backend | **No WhisperType servers** | Their cloud | Their stack |
-| Source | **OSS** | Closed | Closed |
-
-## Features (v1.0.0)
-
-- Home · History · Dictionary · Settings (dark UI v2)  
-- Speech: English / **Hinglish** · Auto-stop 1 min · Grave shortcut · Bubble controls  
-- Gemini key on device · History 30 days (UI default) · Status checklist  
-
-## Requirements
-
-- **Android 13+** (API **33**)  
-- Package: `com.whispertype.android`  
-- Network + mic + overlay + accessibility  
-- Google AI Studio API key  
-
-## Install
-
-Download `WhisperType.apk` from [Releases](https://github.com/whispertypeapp/WhisperType-Android/releases).
-
-```text
-SHA256:
-f7a55069bddcc6a24baad469d5df5b0a76a757bdfa34af375dcbe73b3f9f99df  WhisperType.apk
+```mermaid
+flowchart LR
+    A["📱 Any App<br/>(Focused Text Field)"] --> B["🟢 Mic Bubble<br/>(Tap to Speak)"]
+    B --> C["🎙️ Real-time Audio<br/>(16 kHz PCM stream)"]
+    C --> D["⚡ Gemini Live Engine<br/>(gemini-3.5-transcribe-live)"]
+    D --> E["✨ Shaping Mode<br/>(Smart or Verbatim)"]
+    E --> F["✍️ Cursor Insertion<br/>(Accessibility Service)"]
 ```
+
+1. **Focus any text field** — the floating WhisperType bubble appears above your keyboard.
+2. **Tap the bubble (or mini-dot)** — speak naturally as the real-time waveform displays your voice activity.
+3. **Finish speaking** — tap Done `✓` (or pause for auto-stop); your shaped transcription is committed directly at the cursor.
+
+---
+
+## 🌟 Highlights
+
+### 🎯 Floating Mic Bubble & Mini-Dot
+- Freely draggable circular bubble floats above your keyboard on any app.
+- Auto-minimizes to an unobtrusive mini-dot after inactivity (configurable delay).
+- Bubble size (12–72 dp) and opacity are fully customizable in Settings.
+
+### 🌊 Recording Capsule & Live Waveform
+- An elegant floating pill displays **[Cancel ✕] [Real-Time Waveform] [Done ✓]**.
+- Visual audio feedback is responsive and dynamic, adapting to both soft whispers and normal speaking levels.
+- Anchored layout ensures the Done checkmark lands right where you tapped to start.
+
+### 🧠 Smart vs. Verbatim Transcription
+Choose between two distinct transcription shaping modes:
+
+| Mode | Shaping & Output | Best For |
+| :--- | :--- | :--- |
+| **Smart** *(Default)* | Server-side shaping: eliminates filler words (*"um"*, *"uh"*), resolves self-corrections, and formats grammar, punctuation, and casing. | Everyday messaging, emails, notes, drafting |
+| **Verbatim** | Word-for-word literal transcription preserving all spoken repetitions, filler words, and pauses. | Exact quotes, transcription verification, dictation tests |
+
+### 🔄 In-App & OTA GitHub Updates
+- Automatically queries public GitHub releases on app startup.
+- Displays an update banner on the Home tab and posts an Android notification when a new version is published.
+- Tapping triggers automatic APK download in your default browser.
+
+### 🎧 Bluetooth Headset & Hardware Hotkey Support
+- Switch recording source to a connected Bluetooth headset microphone.
+- Map a physical keyboard key (e.g. grave/backtick `` ` ``) to start and complete dictations hands-free on physical keyboards or tablets (Samsung DeX supported).
+
+### 📖 Custom Dictionary
+- Define custom pronunciation and replacement rules (e.g., spoken technical terms, slang, or names) that automatically substitute on text insertion.
+
+### 🔒 Encrypted History
+- Review past dictation history with word counts and timestamps.
+- Encrypted locally with Android Keystore AES-GCM; configurable auto-retention (7, 14, 30, or 90 days).
+
+---
+
+## 🏗️ Architecture
+
+WhisperType runs across two isolated processes for security, stability, and speed:
+
+```mermaid
+graph TD
+    subgraph MainProcess["Main Process (:app) — Foreground Service"]
+        Overlay["Persistent Window Overlay<br/>(Draggable Bubble & Recording Pill)"]
+        Audio["AudioCapture Pipeline<br/>(16 kHz PCM16 Stream)"]
+        Gemini["OkHttp Gemini Live Session<br/>(BidiGenerateContent WebSocket)"]
+        Coord["DictationCoordinator<br/>(State Machine, Settlement & Tail Backstop)"]
+    end
+    subgraph A11yProcess[":accessibility Process"]
+        Tracker["EditorTracker<br/>(Focus, Bounds & Window Detection)"]
+        Gate["SecurityClassifier<br/>(Secure / Password / PIN Exclusion)"]
+        Insert["AccessibilityTargetGateway<br/>(Validated Cursor commitText)"]
+    end
+    MainProcess <== "Typed Messenger IPC (No text crosses process boundary)" ==> A11yProcess
+```
+
+- **Main Process** (`platform/runtime/FlowRuntimeService.kt`): Owns the foreground service, the overlay composition, mic capture, and the Gemini Live WebSocket session.
+- **Accessibility Process** (`platform/accessibility/WhisperTypeAccessibilityService.kt`): Tracks cursor focus, guarantees secure field exclusion (passwords/PINs never show the bubble), and inserts validated text.
+
+---
+
+## 🚀 Quick Start
+
+1. **Install the App**:
+   Download the latest signed release APK from [GitHub Releases](https://github.com/chaosmanage/WhisperType-Android/releases/latest) and install it on your device.
+2. **Grant Permissions**:
+   Allow **Overlay**, **Microphone**, and optional **Notification** permissions when prompted.
+3. **Enable Accessibility Service**:
+   Navigate to **Android Settings → Accessibility → WhisperType** and toggle it **ON**.
+4. **Configure Gemini API Key**:
+   Open WhisperType → **Settings → Gemini account** → paste your Google Gemini API key. The key is encrypted in your device's Keystore.
+5. **Start Dictating**:
+   Open any app (Messages, Notes, Slack, etc.), focus a text field, tap the floating bubble, and speak!
+
+---
+
+## 🛡️ Privacy & Security
+
+- **Encrypted Secrets**: Your API key is encrypted using hardware-backed Android Keystore with AES-GCM-256. It is never logged or exposed.
+- **Zero Cloud Infrastructure**: Audio streams strictly from your device directly to Google's official Gemini Live endpoint over TLS.
+- **Password Exclusion**: Password fields, PIN fields, and `FLAG_SECURE` screens are explicitly blocked. The bubble never displays over sensitive fields.
+- **No Background Recording**: The microphone is strictly activated when you tap the bubble and deactivates immediately when dictation completes.
+
+---
+
+## 📚 Documentation Hub
+
+| Guide | Description |
+| :--- | :--- |
+| [`docs/USER_SETUP.md`](docs/USER_SETUP.md) | Comprehensive step-by-step setup guide and onboarding walkthrough |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Two-process architecture, IPC contracts, and module breakdown |
+| [`docs/GEMINI_LIVE.md`](docs/GEMINI_LIVE.md) | Gemini Live protocol mechanics, settlement, and wire reference |
+| [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) | Versioning, signing, and GitHub release deployment protocol |
+| [`docs/SECURITY_AND_PRIVACY.md`](docs/SECURITY_AND_PRIVACY.md) | Threat model, Keystore encryption, and privacy rules |
+| [`docs/TESTING.md`](docs/TESTING.md) | Test suite breakdown, device matrix, and manual acceptance testing |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Diagnosing common overlay, accessibility, or network issues |
+| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | Developer workflow, code standards, and PR requirements |
+| [`docs/PUSH_TO_PHONE_VIA_ADB.md`](docs/PUSH_TO_PHONE_VIA_ADB.md) | Wireless ADB deployment over Tailscale |
+| [`CHANGELOG.md`](CHANGELOG.md) | Full version release history |
+
+---
+
+## 🛠️ Build & Development
+
+Requires JDK 17 and Android SDK Platform 36.
 
 ```bash
-git clone https://github.com/whispertypeapp/WhisperType-Android.git
-cd WhisperType-Android
+# Run JVM unit tests
+./gradlew :app:testDebugUnitTest
+
+# Run code analysis (warnings are errors)
+./gradlew :app:lintDebug
+
+# Assemble debug APK
+./gradlew :app:assembleDebug
+
+# Assemble signed release APK
+./gradlew :app:assembleRelease
 ```
 
+---
 
-## Contributing
+## 📱 Supported Environment & Requirements
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). **Never paste API keys** into issues.
-
-## License
-
-Apache License 2.0 — see [LICENSE](LICENSE).
-
-## Disclaimer
-
-Gemini / AI Studio are Google products. WhisperType is independent OSS. Quotas, pricing, and data terms are Google’s.
+- **Operating System**: Android 13+ (`minSdk 33`, `targetSdk 36`).
+- **Supported Keyboards**: Gboard, Samsung Keyboard, Microsoft SwiftKey (standard docked mode).
+- **Service Requirements**: Android Accessibility Service enabled; overlay permission granted.
+- **Current Release**: **v1.2.3** (`versionCode = 69`).

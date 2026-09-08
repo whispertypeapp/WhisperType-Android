@@ -4,9 +4,9 @@ import com.whispertype.android.core.model.LanguageMode
 import com.whispertype.android.core.model.ResultCandidate
 
 /**
- * Pure, stateless transcript candidate selector/validator.
+ * Pure, stateless transcript candidate selector/validator implementing PRD FR-7.
  *
- * Selection order:
+ * Selection order (FR-7):
  *  1. The first candidate whose *cleaned* text passes validation.
  *  2. If none, the first candidate whose *raw* text passes validation.
  *  3. Otherwise [TranscriptSelection.None] so the caller can produce a Copy

@@ -43,8 +43,8 @@ WhisperType's core behavior — the dock overlay, keyboard geometry, and text in
 
 0.4.x targets **Android 13+** (minSdk 33) and adds a runtime permission flow:
 
-- `RECORD_AUDIO` and `POST_NOTIFICATIONS` are requested at runtime during first-run setup, in order (microphone, then notifications).
-- Both must be granted before dictation can start.
+- `RECORD_AUDIO` is requested at runtime during first-run setup for microphone capture.
+- `POST_NOTIFICATIONS` is requested optionally with an explicit rationale; declining it does not block setup or dictation.
 - Android 13+ tablets are in scope; the tablet acceptance tier is not yet validated.
 
 ### ADB baseline commands
@@ -67,7 +67,7 @@ Record the results in the table below. **Never commit device serials or other un
 
 | Phone model | Android version | Keyboard | Navigation mode | Overlay result | Insertion result | Known issues | Last tested date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Samsung Galaxy (Android 16, SDK 36) | 16 (SDK 36) | Samsung Keyboard | Portrait | Pass | Pass |  | 2026-08-06 |
+| Samsung Galaxy S25 (SM-S921B) | 16 (SDK 36) | Samsung Keyboard | Portrait | Pass | Pass |  | 2026-08-06 |
 | Pixel | — | Gboard | Portrait | Pending | Pending |  | — |
 | Pixel | — | Gboard | Landscape | Pending | Pending |  | — |
 | Pixel | — | SwiftKey | Portrait | Pending | Pending |  | — |
@@ -142,10 +142,12 @@ If a precondition fails: reinstall (`install -r`), grant permissions, re-enable 
 - **Physical-keyboard hotkey.** Connect a physical (hardware) keyboard. With the default hotkey (grave/backtick) and no soft IME showing, focus a safe text field and press the hotkey: Pass: dictation starts (session `Starting`/`Listening`). Speak, press again: Pass: the turn finalizes and inserts (same path as tapping Done). Press the hotkey outside any editor: Pass: nothing starts. Select `Off` in `Settings → Recording → Keyboard shortcut`: Pass: the key no longer toggles dictation and types normally. Switch the shortcut to `F9`: Pass: F9 toggles and the grave key types normally. In a password field: Pass: the hotkey does not start dictation.
 - **Smart-mode shaping.** Dictate a phrase with filler words and a mid-sentence self-correction. Pass: the inserted transcript has the fillers removed and the correction resolved (server-side `smart` mode; no polish setting exists anymore).
 - **Interim partials stream live.** During a long dictation, Pass: the recording pill's transcript area shows the partial text revising while you speak, and the final insert matches the last committed segment.
-- **Custom dictionary corrections.** Add a word plus an optional `Always write as` correction in the Custom dictionary page; dictate the uncorrected form. Pass: the inserted text uses the corrected spelling (applied at insertion, word-boundary, case-insensitive); the live transcript is not rewritten mid-session.
+- **Custom dictionary rule management.** Add a rule in the Dictionary sheet (e.g. `kuber net ease → Kubernetes`); verify live preview. Test editing an existing rule, deleting a rule via the delete icon, clear all confirmation dialog, and case-insensitive identical warning requiring explicit "Save anyway". Dictate the spoken phrase: Pass: the inserted text uses the replacement spelling (applied at final insertion, word-boundary, case-insensitive, preserving casing and internal spaces). Legacy blank replacements act safely as no-ops.
+- **Home dashboard layout.** Open Home at 360dp width, landscape, and 200% font scale: Pass: no text clips, weekly hero card renders 7 rounded vertical bars aligned to a common baseline, glance metric grid adapts between 2-column and single-column stacked cards, and recent dictations card renders compactly without dead vertical space.
+- **Foreground notification states & shade actions.** In idle, notification displays `WhisperType bubble is ready: Your microphone turns on only when you tap the bubble.` Tap bubble to start dictation: Pass: notification updates immediately to `Recording dictation: WhisperType is using your microphone.` with Stop and Cancel actions. Tap Stop from notification shade: Pass: turn finalizes, notification updates to `Finishing dictation: Your microphone is off.`, FGS demotes back to `specialUse`, text is inserted, and notification returns to idle.
 - **History list / copy / delete / delete-all.** Enable `Local history`, complete a dictation, open the History tab. Pass: the transcript appears; Copy copies the text; Delete removes one entry; `Clear all history` empties the list; entries respect the retention period.
 - **Mini-dot auto-minimize.** With the mini-dot option enabled and an idle bubble, Pass: the bubble shrinks to a small dot after the configured delay and the dot still starts dictation.
-- **Kill switch / app-enabled.** Disable the app-enabled setting. Pass: the runtime fully stops — the "WhisperType is listening" foreground notification disappears, the system "displaying over other apps" notification disappears, the bubble/overlay is gone, and a live dictation is aborted. Re-enabling restores the bubble, notifications, and dictation.
+- **Kill switch / app-enabled.** Disable the app-enabled setting. Pass: the runtime fully stops — the foreground notification disappears, the system "displaying over other apps" notification disappears, the bubble/overlay is gone, and a live dictation is aborted. Re-enabling restores the bubble, notifications, and dictation.
 - **Kill switch / no resurrection.** With the app disabled, force-stop the app and reopen it (or restart the Accessibility Service). Pass: the runtime stays off while `App enabled` is OFF; only turning it back on restarts the runtime.
 - **Dark mode.** Toggle dark mode: Pass: app screens render in the dark theme and the overlay remains legible.
 
@@ -266,11 +268,11 @@ transcripts. Remaining on-device (S25) checks before claiming 0.10.0 verified:
 
 ## Release checklist
 
-Before each release:
+Before each private release:
 
 - All unit tests pass (`:app:testDebugUnitTest`).
 - Lint passes with no warnings (`:app:lintDebug`).
-- Manual matrix passes on at least one physical device.
+- Samsung manual matrix passes (the S25 row is the actively tested device).
 - Remaining device matrix rows are `Pending` or `Pass`, never silently ignored.
 - No secrets scan matches.
 - No forbidden logging matches.

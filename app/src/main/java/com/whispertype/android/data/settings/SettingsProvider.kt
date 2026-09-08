@@ -3,14 +3,16 @@ package com.whispertype.android.data.settings
 import com.whispertype.android.core.dictionary.DictionaryEntry
 import com.whispertype.android.core.model.AudioSourcePreference
 import com.whispertype.android.core.model.LanguageMode
+import com.whispertype.android.core.model.TranscriptionMode
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Settings consumed by working runtime consumers only. No setting
+ * Settings consumed by working runtime consumers only (PRD FR-10). No setting
  * exists here without an implementation and a test.
  */
 interface SettingsProvider {
     val speechMode: Flow<LanguageMode>
+    val transcriptionMode: Flow<TranscriptionMode>
     val historyEnabled: Flow<Boolean>
     val historyRetentionDays: Flow<Int>
     val appEnabled: Flow<Boolean>

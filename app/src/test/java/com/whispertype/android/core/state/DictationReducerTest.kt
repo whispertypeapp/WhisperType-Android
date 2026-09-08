@@ -13,7 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Unit tests for [DictationReducer] covering the dictation state machine. */
+/** Unit tests for [DictationReducer] covering the PRD §8 state machine. */
 class DictationReducerTest {
 
     private val reducer = DictationReducer()

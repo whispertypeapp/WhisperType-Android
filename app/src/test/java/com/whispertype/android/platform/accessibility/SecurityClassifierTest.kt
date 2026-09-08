@@ -3,7 +3,7 @@ package com.whispertype.android.platform.accessibility
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Pure host tests for [SecurityClassifier] (editor eligibility requirements). */
+/** Pure host tests for [SecurityClassifier] (PRD FR-2 Eligibility, §16.4). */
 class SecurityClassifierTest {
 
     // ------------------------------------------------------------------

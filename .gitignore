@@ -6,7 +6,6 @@ local.properties
 signing.properties
 *.jks
 *.keystore
-*.apk
 *.aab
 captures/
 .externalNativeBuild/
@@ -38,4 +37,6 @@ fixtures/*.txt
 # Playwright MCP session artifacts
 .playwright-mcp/
 
+# OpenCode session and goal artifacts
 .opencode/
+

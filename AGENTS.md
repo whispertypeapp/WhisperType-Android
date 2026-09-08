@@ -58,7 +58,7 @@ Layer rules:
 ## Conventions
 
 - **Version bump in the same commit** as any behavior change: `versionCode` +1 and
-  `versionName` bump in `app/build.gradle.kts` (currently 1.0.0 / 1). Add a
+  `versionName` bump in `app/build.gradle.kts` (currently 1.2.1 / 67). Add a
   `CHANGELOG.md` entry for user-visible changes. The README version line lags the real
   version — trust `app/build.gradle.kts`.
 - **Every push to the test device carries a fresh build number** — bump
@@ -76,11 +76,16 @@ Layer rules:
 
 ## Gotchas
 
-- Release signing never enters git: keystore lives outside the repo,
-  `signing.properties` is gitignored; release builds without it are unsigned.
+- **The release signing keystore `keystore/whispertype-release.keystore` and
+  `signing.properties` are committed to git** (done by explicit user request; the keystore
+  has no real password protection). This contradicts `docs/CONTRIBUTING.md` / `RELEASE_PROCESS.md`
+  which say never to commit them. Don't "fix" this, don't leak/expose the files or their
+  contents, and don't add real credentials anywhere. `app/build.gradle.kts` wires up the
+  `release` signing config automatically when `signing.properties` exists.
 - `BuildConfig.GIT_COMMIT` is embedded at build time via `git rev-parse --short HEAD`
   (`app/build.gradle.kts`), so builds run outside the git repo report "unknown".
-- Release APKs are never tracked; attach them to GitHub Releases only.
+- `app/build/outputs/apk/release/app-release.apk` (and previously the debug APK) is a
+  **tracked artifact**; rebuilds change it, so be deliberate about staging it.
 - `scripts/*.ps1` are PowerShell and Windows-oriented (ADB installs, diagnostics, secret
   scanning). On this Linux box use `./gradlew` directly.
 - Release builds are signed only when `signing.properties` exists; without it the release

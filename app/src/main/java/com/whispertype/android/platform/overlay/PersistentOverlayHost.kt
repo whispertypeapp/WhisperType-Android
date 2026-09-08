@@ -23,6 +23,7 @@ import com.whispertype.android.core.model.OverlayIntent
 import com.whispertype.android.core.model.OverlayUiState
 import com.whispertype.android.core.model.TargetEligibility
 import com.whispertype.android.core.overlay.BubblePlacement
+import com.whispertype.android.data.settings.SettingsRepository
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -189,7 +190,7 @@ class PersistentOverlayHost(
         scope.launch {
             combine(bubbleSizeDp, bubbleOpacityPercent, miniDotEnabled, miniDotDelaySeconds) { size, opacity, dot, delay ->
                 OverlayAppearance(
-                    bubbleSizeDp = size.coerceIn(24, 72),
+                    bubbleSizeDp = size.coerceIn(SettingsRepository.MIN_BUBBLE_SIZE_DP, SettingsRepository.MAX_BUBBLE_SIZE_DP),
                     opacityPercent = opacity.coerceIn(10, 100),
                     miniDotEnabled = dot,
                     miniDotAutoMinimizeMs = delay.coerceIn(1, 15) * 1000L,
@@ -524,8 +525,8 @@ class PersistentOverlayHost(
     // Recording-pill anchoring
     // ------------------------------------------------------------------
 
-    /** The visible bubble's size in px (48dp touch floor, user size above). */
-    private fun bubbleSizePx(): Int = (maxOf(48f, _appearance.value.bubbleSizeDp.toFloat()) * density()).roundToInt()
+    /** The visible bubble's size in px. */
+    private fun bubbleSizePx(): Int = (_appearance.value.bubbleSizeDp.toFloat() * density()).roundToInt()
 
     /** The bubble's center (px) — the point the user tapped to start. */
     private fun bubbleCenter(): Pair<Int, Int>? {

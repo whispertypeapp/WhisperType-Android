@@ -1,7 +1,7 @@
 package com.whispertype.android.platform.overlay
 
 /**
- * Typed host lifecycle status. [AttachPending] is the transient
+ * Typed host lifecycle status (PRD §16.5). [AttachPending] is the transient
  * window while a main-thread [android.view.WindowManager.addView] is in flight;
  * it is included so a detach issued during an in-flight attach is safe.
  */

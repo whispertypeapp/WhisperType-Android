@@ -72,4 +72,47 @@ class DictionaryCorrectionsTest {
     fun `does not match a substring inside a longer word`() {
         assertEquals("concatenate", DictionaryCorrections.apply("concatenate", catToDog))
     }
+
+    @Test
+    fun `legacy blank replacement is a no-op and never deletes text`() {
+        val entries = listOf(DictionaryEntry("test", ""))
+        assertEquals("this is a test sentence", DictionaryCorrections.apply("this is a test sentence", entries))
+    }
+
+    @Test
+    fun `legacy whitespace-only replacement is a no-op and never deletes text`() {
+        val entries = listOf(DictionaryEntry("test", "   "))
+        assertEquals("this is a test sentence", DictionaryCorrections.apply("this is a test sentence", entries))
+    }
+
+    @Test
+    fun `identical rule leaves text unchanged`() {
+        val entries = listOf(DictionaryEntry("Kubernetes", "Kubernetes"))
+        assertEquals("I use Kubernetes today", DictionaryCorrections.apply("I use Kubernetes today", entries))
+    }
+
+    @Test
+    fun `replaces multiword phrase kuber net ease with Kubernetes`() {
+        val entries = listOf(DictionaryEntry("kuber net ease", "Kubernetes"))
+        assertEquals(
+            "Deploy to Kubernetes cluster",
+            DictionaryCorrections.apply("Deploy to kuber net ease cluster", entries),
+        )
+        assertEquals(
+            "Kubernetes is running",
+            DictionaryCorrections.apply("Kuber net ease is running", entries),
+        )
+    }
+
+    @Test
+    fun `overlapping multiword rules pick longest match`() {
+        val entries = listOf(
+            DictionaryEntry("machine learning", "ML"),
+            DictionaryEntry("machine learning model", "ML model"),
+        )
+        assertEquals(
+            "Here is the ML model pipeline",
+            DictionaryCorrections.apply("Here is the machine learning model pipeline", entries),
+        )
+    }
 }

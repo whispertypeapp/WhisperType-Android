@@ -37,8 +37,8 @@ android {
         applicationId = "com.whispertype.android"
         minSdk = 33
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 69
+        versionName = "1.2.3"
 
         // Embedded git revision so the app can display the exact source commit.
         buildConfigField("String", "GIT_COMMIT", "\"${gitCommitHash()}\"")
@@ -68,7 +68,7 @@ android {
             applicationIdSuffix = null
         }
         release {
-            // R8 minification enabled for the release APK. Compose and
+            // 0.6.0: R8 minification enabled for the release APK. Compose and
             // kotlinx-serialization keep rules ship via consumer rules and
             // proguard-rules.pro.
             isMinifyEnabled = true

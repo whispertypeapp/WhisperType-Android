@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for the transcript candidate selector/validator.
+ * Unit tests for the PRD FR-7 transcript candidate selector/validator.
  */
 class TranscriptSelectorTest {
 

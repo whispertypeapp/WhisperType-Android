@@ -41,7 +41,7 @@ object BrandColors {
     val TealLight = Color(0xFFA7F0E2)
 }
 
-/** Studio theme tokens. */
+/** Studio theme color palette. */
 object StudioColors {
     val Background = Color(0xFF10100E)
     val Surface = Color(0xFF1A1A16)
@@ -90,8 +90,8 @@ object StudioType {
     val greeting = TextStyle(
         fontFamily = InstrumentSans,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 26.sp,
-        lineHeight = 30.sp,
+        fontSize = 30.sp,
+        lineHeight = 34.sp,
         letterSpacing = (-0.8).sp,
         color = StudioColors.OnBackground,
     )
@@ -159,8 +159,8 @@ object StudioType {
     val metricValue = TextStyle(
         fontFamily = InstrumentSans,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 22.sp,
-        lineHeight = 26.sp,
+        fontSize = 26.sp,
+        lineHeight = 30.sp,
         letterSpacing = (-0.5).sp,
         color = StudioColors.OnBackground,
         fontFeatureSettings = "tnum",
@@ -168,9 +168,24 @@ object StudioType {
     val metricLabel = TextStyle(
         fontFamily = InstrumentSans,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 15.sp,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
         color = StudioColors.OnSurfaceVariant,
+    )
+    val tagLabel = TextStyle(
+        fontFamily = InstrumentSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp,
+        color = StudioColors.OnSurfaceVariant,
+    )
+    val recentSnippet = TextStyle(
+        fontFamily = InstrumentSans,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        color = StudioColors.OnBackground,
     )
     val snippet = TextStyle(
         fontFamily = InstrumentSans,
@@ -198,6 +213,19 @@ object StudioType {
         fontSize = 11.sp,
         lineHeight = 14.sp,
     )
+}
+
+/** Studio layout spacing, radii, and gutter metrics. */
+object StudioLayout {
+    val GutterHorizontal = 20.dp
+    val GutterBottom = 24.dp
+    val SpacingInside = 8.dp
+    val SpacingRelated = 12.dp
+    val SpacingSection = 20.dp
+    val RadiusHero = 24.dp
+    val RadiusCard = 18.dp
+    val RadiusField = 14.dp
+    val MinInteractiveTarget = 48.dp
 }
 
 private val StudioColorScheme = darkColorScheme(
@@ -250,12 +278,12 @@ fun WhisperTypeTheme(
 @Composable
 fun StudioCard(
     modifier: Modifier = Modifier,
-    radius: Int = 16,
+    radius: Dp = StudioLayout.RadiusCard,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(radius.dp),
+        shape = RoundedCornerShape(radius),
         color = StudioColors.Surface,
         border = BorderStroke(1.dp, StudioColors.Hairline),
         shadowElevation = 0.dp,
@@ -264,6 +292,13 @@ fun StudioCard(
         Column(content = content)
     }
 }
+
+@Composable
+fun StudioCard(
+    modifier: Modifier = Modifier,
+    radius: Int,
+    content: @Composable ColumnScope.() -> Unit,
+) = StudioCard(modifier = modifier, radius = radius.dp, content = content)
 
 @Composable
 fun StudioPageTitle(text: String, modifier: Modifier = Modifier) {

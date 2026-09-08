@@ -26,7 +26,7 @@ When you focus a normal text field, a round mic bubble (the app logo) appears ne
 For development installation from a computer:
 
 ```powershell
-adb install -r WhisperType-Android-1.0.0.apk
+adb install -r WhisperType-Android-0.4.2-release.apk
 ```
 
 ## Grant overlay permission
@@ -45,18 +45,15 @@ The bubble is drawn over other apps, so overlay access is required.
 
 WhisperType does not record continuously. The microphone is used only during an active dictation session.
 
-## Grant notification permission
+## Notification permission (optional)
 
-WhisperType shows a recording notification while the microphone is active.
+WhisperType shows a background status notification so Android keeps the bubble running and lets you stop or cancel dictation from the shade.
 
-1. On the Home tab, tap the `Notifications` tile and allow it.
-2. If you previously denied it, open:
+- **Bubble ready (idle)**: low priority, silent, ongoing — `WhisperType bubble is ready: Your microphone turns on only when you tap the bubble.`
+- **Recording dictation**: ongoing notification with live actions — `Recording dictation: WhisperType is using your microphone.` Includes **Stop** and **Cancel** buttons.
+- **Finishing dictation**: `Finishing dictation: Your microphone is off.`
 
-   `Settings → Apps → WhisperType → Notifications`
-
-3. Enable notifications.
-
-The notification includes Stop and Cancel actions while recording.
+Notification permission is **optional**: declining it never prevents setup, dictation, or use of the bubble. If notifications are turned off in Android settings, Android may still show an active foreground service in Task Manager. You can manage notification settings at any time via `Settings → System → Notifications`.
 
 ## Enable Accessibility access
 
@@ -140,7 +137,7 @@ Open:
 
 Choose:
 
-- `English`
+- `English` (default)
 - `Hinglish`
 
 Hinglish supports natural English/Hindi code-switching; the transcribe model's
@@ -155,7 +152,7 @@ Open:
 
 Available controls:
 
-- Bubble size (24-72 dp).
+- Bubble size (12-72 dp).
 - Bubble opacity (10-100%).
 - `Mini dot` — shrink the bubble to a small dot when idle (the dot still starts dictation).
 - `Turn to dot after` — idle seconds before auto-minimizing (1-15 s, default 3 s).
@@ -254,12 +251,16 @@ overlay-permission screen instead of starting a bubble that cannot appear.
 
 Open the `Dictionary` tab (bottom navigation).
 
-- Enter the word exactly as you say it (Word as spoken).
-- Optionally enter `Always write as` to force a specific spelling.
-- Tap `Add` to save it.
-- Delete a single entry, or `Clear all` to remove every entry.
+- Tap `+ Add rule` to open the rule editor sheet.
+- **What you say**: enter spoken words or phonetic representations (e.g. `kuber net ease`).
+- **How it should be written**: enter the intended final spelling (e.g. `Kubernetes`).
+- A live preview demonstrates the exact replacement before saving.
+- Rules preserve capitalization and internal spaces while trimming outer whitespace. Multiword phrases are fully supported.
+- If the replacement text matches the spoken text case-insensitively, WhisperType clarifies that the transcript will not be altered and offers an explicit `Save anyway` confirmation.
+- Tap the **Edit** icon (pencil) on any existing rule to edit it, or the **Delete** icon (trash) to remove it.
+- Tap **Clear all** to remove all rules after confirming the count of rules to clear.
 
-Corrections are applied when the transcript is inserted, so the dictionary never rewrites the live transcript mid-session. Matching is word-boundary and case-insensitive.
+Corrections are applied cleanly at the final text stage before insertion, so the dictionary never rewrites the live transcript mid-session. Matching is word-boundary and case-insensitive. Legacy blank replacement entries are treated safely as no-ops instead of deleting matched text.
 
 ## Reset the bubble position
 
@@ -269,18 +270,15 @@ If you dragged the mic bubble somewhere awkward, reset it:
 
 The bubble returns to its default position.
 
-## Check the Home status grid
+## Home dashboard
 
-The Home tab shows a 2-column status grid of everything dictation needs. Any tile that reads Off can be tapped to `Fix` it:
+The Home tab provides a clean, glanceable overview of your dictation activity:
 
-- Overlay permission
-- Runtime service
-- Accessibility service
-- Gemini API key
-- Microphone permission
-- Notifications
-
-The Home tab also shows your dictation stats (Sessions, Words, Words today, Words this week, Words/min, Words/session), derived from local history.
+- **Weekly Hero Card**: Displays total words dictated this week alongside 7 daily rounded vertical bars (Monday through Sunday) aligned to a common baseline, with today's bar highlighted in accent mint.
+- **At-a-Glance Metrics**: Shows your average speaking speed (`Words / min`) and efficiency (`Words / session`), adapting seamlessly between dual-card and stacked single-column layouts depending on screen width.
+- **Recent Dictations**: A compact, content-height card showing your latest transcript snippet, timestamp, word count, and outcome badge, with a direct affordance to view full history.
+- **Setup Banner**: If a critical system service requires attention (Accessibility service, Overlay permission, Microphone permission, or Gemini API key), an actionable banner appears at the top. Non-blocking notifications never generate a setup error banner.
+- **System Diagnostics**: Detailed system gate health can be viewed and resolved under `Settings → System`.
 
 ## Daily use
 

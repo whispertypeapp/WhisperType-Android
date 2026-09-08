@@ -41,6 +41,7 @@ import com.whispertype.android.core.model.MutableSessionMetrics
 import com.whispertype.android.core.model.OverlayIntent
 import com.whispertype.android.core.model.SessionId
 import com.whispertype.android.core.model.TargetEligibility
+import com.whispertype.android.core.model.TranscriptionMode
 import com.whispertype.android.core.model.WarmClaimResult
 import com.whispertype.android.data.history.EncryptedHistoryRepository
 import com.whispertype.android.data.history.HistoryRepository
@@ -106,6 +107,9 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
     private val _sessionState = MutableStateFlow<DictationState>(DictationState.Idle)
     val sessionState: StateFlow<DictationState> = _sessionState.asStateFlow()
 
+    @SuppressLint("InlinedApi")
+    private var currentFgsType: Int = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+
     private var overlayHost: PersistentOverlayHost? = null
 
     /** Reply messenger registered by the accessibility process. */
@@ -157,6 +161,9 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
     // service scope so the tap path never does sequential DataStore first() reads.
     @Volatile
     private var cachedSpeechMode: LanguageMode = LanguageMode.ENGLISH
+
+    @Volatile
+    private var cachedTranscriptionMode: TranscriptionMode = SettingsRepository.DEFAULT_TRANSCRIPTION_MODE
 
     @Volatile
     private var cachedHistoryEnabled: Boolean = false
@@ -243,7 +250,19 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
      * does not cover redelivery to an existing instance.
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(NOTIFICATION_ID, buildNotification(), overlayFgsTypes())
+        when (intent?.action) {
+            ACTION_STOP_DICTATION -> {
+                Log.i(TAG, "Notification action: Stop dictation")
+                coordinator.stop()
+                return START_NOT_STICKY
+            }
+            ACTION_CANCEL_DICTATION -> {
+                Log.i(TAG, "Notification action: Cancel dictation")
+                coordinator.cancel()
+                return START_NOT_STICKY
+            }
+        }
+        startForeground(NOTIFICATION_ID, buildNotification(_sessionState.value), currentFgsType)
         return START_NOT_STICKY
     }
 
@@ -256,11 +275,13 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
         // overlay service can run before RECORD_AUDIO is granted. On API 33 the
         // specialUse bit is inert but accepted (manifest-declared); the service
         // is promoted to include the microphone type during dictation.
-        startForeground(NOTIFICATION_ID, buildNotification(), overlayFgsTypes())
+        currentFgsType = overlayFgsTypes()
+        startForeground(NOTIFICATION_ID, buildNotification(_sessionState.value), currentFgsType)
         startOverlay()
         // Collect the runtime settings snapshot eagerly (Release D2) so the tap
         // path reads in-memory values instead of blocking on DataStore.
         scope.launch { settings.speechMode.collect { cachedSpeechMode = it } }
+        scope.launch { settings.transcriptionMode.collect { cachedTranscriptionMode = it } }
         scope.launch { settings.historyEnabled.collect { cachedHistoryEnabled = it } }
         scope.launch { settings.historyRetentionDays.collect { cachedHistoryRetentionDays = it } }
         scope.launch { settings.autoStopSeconds.collect { cachedAutoStopSeconds = it } }
@@ -379,6 +400,7 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
         _sessionState.value = state
         // Dictation activity changes warm-prewarm eligibility; re-evaluate.
         refreshWarmEligibility()
+        updateForegroundNotification(state)
     }
 
     override suspend fun resolveSession(metrics: MutableSessionMetrics): SessionResolve {
@@ -424,14 +446,15 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
                 model = model,
                 apiVersion = profile.apiVersion,
                 language = language,
+                transcriptionMode = profile.transcriptionMode,
                 transcriptionLanguageCode = transcriptionLanguageCode(language),
                 automaticActivityDetectionDisabled = profile.automaticActivityDetectionDisabled,
                 activityHandlingNoInterruption = profile.activityHandlingNoInterruption,
                 inputAudioTranscription = profile.inputAudioTranscription,
                 // Release B production protocol: manual activity signaling
                 // (automaticActivityDetection disabled by default) and no text
-                // prime. Text shaping runs server-side in the transcribe model's
-                // `smart` mode; the language hint biases code-mixing.
+                // prime. Text shaping runs server-side according to the selected
+                // transcriptionMode; the language hint biases code-mixing.
             ),
             client = sharedOkHttpClient,
             metrics = metrics,
@@ -463,6 +486,7 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
                 model = profile.model,
                 apiVersion = profile.apiVersion,
                 language = profile.language,
+                transcriptionMode = profile.transcriptionMode,
                 transcriptionLanguageCode = transcriptionLanguageCode(profile.language),
                 automaticActivityDetectionDisabled = profile.automaticActivityDetectionDisabled,
                 activityHandlingNoInterruption = profile.activityHandlingNoInterruption,
@@ -479,6 +503,7 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
             model = GeminiSessionFactory.LIVE_MODEL,
             apiVersion = GeminiSessionConfig.DEFAULT_API_VERSION,
             language = language,
+            transcriptionMode = cachedTranscriptionMode.wireValue,
             automaticActivityDetectionDisabled = true,
             activityHandlingNoInterruption = cachedSegmentAtSilence,
             inputAudioTranscription = true,
@@ -545,9 +570,10 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
         // Promote to microphone foreground mode before AudioRecord, only now that
         // RECORD_AUDIO is confirmed granted. specialUse stays in the type set so
         // the overlay service keeps running after dictation.
+        currentFgsType = dictationFgsTypes()
         startForeground(
             NOTIFICATION_ID,
-            buildNotification(),
+            buildNotification(DictationState.Listening(metrics.sessionId)),
             dictationFgsTypes(),
         )
         // AudioRecord construction and startRecording run off the main thread
@@ -560,7 +586,17 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
             val audioManager = getSystemService(AudioManager::class.java)
             val cap = AudioCapture(sourceFactory = audioSourceFactory(audioManager, cachedAudioSourcePreference))
             when (val start = cap.start()) {
-                is AudioStartResult.Failed -> CaptureStart.Failed(start.failure)
+                is AudioStartResult.Failed -> {
+                    withContext(Dispatchers.Main) {
+                        currentFgsType = overlayFgsTypes()
+                        startForeground(
+                            NOTIFICATION_ID,
+                            buildNotification(_sessionState.value),
+                            overlayFgsTypes(),
+                        )
+                    }
+                    CaptureStart.Failed(start.failure)
+                }
                 AudioStartResult.Started -> {
                     metrics.mark(MutableSessionMetrics.Event.CaptureStarted)
                     CaptureStart.Started(cap)
@@ -675,19 +711,93 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
         val manager = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
-            getString(R.string.mic_notification_channel),
+            getString(R.string.notification_channel_bubble),
             NotificationManager.IMPORTANCE_LOW,
         )
         manager.createNotificationChannel(channel)
     }
 
-    private fun buildNotification(): Notification {
-        return Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(getString(R.string.mic_notification_title))
-            .setContentText(getString(R.string.mic_notification_text))
+    private fun updateForegroundNotification(state: DictationState) {
+        if (!isRunning || killSwitchFired) return
+        val isListening = state is DictationState.Listening
+        val targetFgsType = if (isListening) dictationFgsTypes() else overlayFgsTypes()
+        val notification = buildNotification(state)
+        if (targetFgsType != currentFgsType) {
+            currentFgsType = targetFgsType
+            startForeground(NOTIFICATION_ID, notification, targetFgsType)
+        } else {
+            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun buildNotification(state: DictationState = _sessionState.value): Notification {
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        val contentIntent = if (launchIntent != null) {
+            PendingIntent.getActivity(
+                this,
+                NOTIFICATION_REQUEST_CODE_CONTENT,
+                launchIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        } else null
+
+        val builder = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
-            .build()
+
+        if (contentIntent != null) {
+            builder.setContentIntent(contentIntent)
+        }
+
+        when (state) {
+            is DictationState.Listening -> {
+                val stopIntent = Intent(this, FlowRuntimeService::class.java).apply {
+                    action = ACTION_STOP_DICTATION
+                }
+                val stopPendingIntent = PendingIntent.getService(
+                    this,
+                    NOTIFICATION_REQUEST_CODE_STOP,
+                    stopIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+                val cancelIntent = Intent(this, FlowRuntimeService::class.java).apply {
+                    action = ACTION_CANCEL_DICTATION
+                }
+                val cancelPendingIntent = PendingIntent.getService(
+                    this,
+                    NOTIFICATION_REQUEST_CODE_CANCEL,
+                    cancelIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+
+                builder.setContentTitle(getString(R.string.notification_recording_title))
+                    .setContentText(getString(R.string.notification_recording_text))
+                    .addAction(
+                        Notification.Action.Builder(
+                            null,
+                            getString(R.string.notification_action_stop),
+                            stopPendingIntent,
+                        ).build(),
+                    )
+                    .addAction(
+                        Notification.Action.Builder(
+                            null,
+                            getString(R.string.notification_action_cancel),
+                            cancelPendingIntent,
+                        ).build(),
+                    )
+            }
+            is DictationState.Finalizing, is DictationState.Inserting -> {
+                builder.setContentTitle(getString(R.string.notification_finishing_title))
+                    .setContentText(getString(R.string.notification_finishing_text))
+            }
+            else -> {
+                builder.setContentTitle(getString(R.string.notification_bubble_ready_title))
+                    .setContentText(getString(R.string.notification_bubble_ready_text))
+            }
+        }
+
+        return builder.build()
     }
 
     // ------------------------------------------------------------------
@@ -755,6 +865,12 @@ class FlowRuntimeService : Service(), OverlayOwners, DictationHost {
         const val TAG = "FlowRuntimeService"
         const val NOTIFICATION_ID = 1001
         const val NOTIFICATION_CHANNEL_ID = "whispertype_runtime"
+
+        const val ACTION_STOP_DICTATION = "com.whispertype.android.action.STOP_DICTATION"
+        const val ACTION_CANCEL_DICTATION = "com.whispertype.android.action.CANCEL_DICTATION"
+        private const val NOTIFICATION_REQUEST_CODE_CONTENT = 101
+        private const val NOTIFICATION_REQUEST_CODE_STOP = 102
+        private const val NOTIFICATION_REQUEST_CODE_CANCEL = 103
 
         /** 0.5.2: low-importance channel/id for the accessibility-drop watchdog. */
         const val A11Y_WATCHDOG_CHANNEL_ID = "whispertype_a11y_watchdog"

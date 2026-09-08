@@ -1,7 +1,7 @@
 package com.whispertype.android.core.privacy
 
 /**
- * Pure, stateless, deterministic log redactor implementing the privacy redaction requirements
+ * Pure, stateless, deterministic log redactor implementing PRD FR-6 / §12
  * (Security, Privacy): no API key, authenticated URL, transcript, editor
  * content, AccessibilityNode tree, clipboard content, or raw audio appears in
  * logs.

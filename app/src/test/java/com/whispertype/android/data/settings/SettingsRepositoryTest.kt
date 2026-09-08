@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import com.whispertype.android.core.dictionary.DictionaryEntry
 import com.whispertype.android.core.model.AudioSourcePreference
 import com.whispertype.android.core.model.LanguageMode
+import com.whispertype.android.core.model.TranscriptionMode
 import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -36,11 +37,12 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `defaults are Hinglish - history on - 30 day retention - app on - onboarding pending`() =
+    fun `defaults are English - history on - 30 day retention - app on - onboarding pending`() =
         runTest {
             val repo = newRepository()
 
-            assertEquals(LanguageMode.HINGLISH, repo.speechMode.first())
+            assertEquals(LanguageMode.ENGLISH, repo.speechMode.first())
+            assertEquals(TranscriptionMode.SMART, repo.transcriptionMode.first())
             assertTrue(repo.historyEnabled.first())
             assertEquals(SettingsRepository.DEFAULT_RETENTION_DAYS, repo.historyRetentionDays.first())
             assertTrue(repo.appEnabled.first())
@@ -59,12 +61,14 @@ class SettingsRepositoryTest {
         val repo = newRepository()
 
         repo.setSpeechMode(LanguageMode.HINGLISH)
+        repo.setTranscriptionMode(TranscriptionMode.SMART)
         repo.setHistoryEnabled(true)
         repo.setHistoryRetentionDays(7)
         repo.setAppEnabled(false)
         repo.setOnboardingCompleted(true)
 
         assertEquals(LanguageMode.HINGLISH, repo.speechMode.first())
+        assertEquals(TranscriptionMode.SMART, repo.transcriptionMode.first())
         assertTrue(repo.historyEnabled.first())
         assertEquals(7, repo.historyRetentionDays.first())
         assertFalse(repo.appEnabled.first())
@@ -72,19 +76,46 @@ class SettingsRepositoryTest {
     }
 
     @Test
-    fun `unknown stored speech mode falls back to Hinglish`() = runTest {
+    fun `unknown stored speech mode falls back to English`() = runTest {
         val dataStore =
             PreferenceDataStoreFactory.create(
                 produceFile = { File(tmp.root, "corrupt-mode.preferences_pb") },
             )
         val repo = SettingsRepository(dataStore)
 
-        repo.setSpeechMode(LanguageMode.HINGLISH)
+        repo.setSpeechMode(LanguageMode.ENGLISH)
         // Write an unknown value directly to simulate a store that predates
         // removing/modifying a mode and would otherwise be a parse risk.
         dataStore.edit { it[stringPreferencesKey("speech_mode")] = "KANNADA" }
 
-        assertEquals(LanguageMode.HINGLISH, repo.speechMode.first())
+        assertEquals(LanguageMode.ENGLISH, repo.speechMode.first())
+    }
+
+    @Test
+    fun `unknown stored transcription mode falls back to Smart`() = runTest {
+        val dataStore =
+            PreferenceDataStoreFactory.create(
+                produceFile = { File(tmp.root, "corrupt-transcription-mode.preferences_pb") },
+            )
+        val repo = SettingsRepository(dataStore)
+
+        repo.setTranscriptionMode(TranscriptionMode.VERBATIM)
+        dataStore.edit { it[stringPreferencesKey("transcription_mode")] = "UNKNOWN_MODE" }
+
+        assertEquals(TranscriptionMode.SMART, repo.transcriptionMode.first())
+    }
+
+    @Test
+    fun `transcription mode setter round-trips`() = runTest {
+        val repo = newRepository()
+
+        assertEquals(TranscriptionMode.SMART, repo.transcriptionMode.first())
+
+        repo.setTranscriptionMode(TranscriptionMode.VERBATIM)
+        assertEquals(TranscriptionMode.VERBATIM, repo.transcriptionMode.first())
+
+        repo.setTranscriptionMode(TranscriptionMode.SMART)
+        assertEquals(TranscriptionMode.SMART, repo.transcriptionMode.first())
     }
 
     @Test
@@ -143,6 +174,64 @@ class SettingsRepositoryTest {
         dataStore.edit { it[stringPreferencesKey("dictionary")] = "{ not valid json" }
 
         assertEquals(emptyList<DictionaryEntry>(), repo.dictionary.first())
+    }
+
+    @Test
+    fun `updateDictionaryEntry replaces rule by original match`() = runTest {
+        val repo = newRepository()
+
+        repo.addDictionaryEntry(DictionaryEntry("kuber net", "Kubernetes"))
+        repo.updateDictionaryEntry("kuber net", DictionaryEntry("kuber net ease", "Kubernetes"))
+
+        assertEquals(
+            listOf(DictionaryEntry("kuber net ease", "Kubernetes")),
+            repo.dictionary.first(),
+        )
+    }
+
+    @Test
+    fun `updateDictionaryEntry deduplicates when updated match exists`() = runTest {
+        val repo = newRepository()
+
+        repo.addDictionaryEntry(DictionaryEntry("kuber net", "Kubernetes"))
+        repo.addDictionaryEntry(DictionaryEntry("k8s", "Kubernetes"))
+        repo.updateDictionaryEntry("kuber net", DictionaryEntry("k8s", "Kubernetes Platform"))
+
+        assertEquals(
+            listOf(DictionaryEntry("k8s", "Kubernetes Platform")),
+            repo.dictionary.first(),
+        )
+    }
+
+    @Test
+    fun `adding duplicate source matches case-insensitively`() = runTest {
+        val repo = newRepository()
+
+        repo.addDictionaryEntry(DictionaryEntry("Kuber Net", "Kubernetes"))
+        repo.addDictionaryEntry(DictionaryEntry("kuber net", "K8s"))
+
+        assertEquals(
+            listOf(DictionaryEntry("kuber net", "K8s")),
+            repo.dictionary.first(),
+        )
+    }
+
+    @Test
+    fun `legacy blank replacement json round-trips without mutating to match`() = runTest {
+        val dataStore =
+            PreferenceDataStoreFactory.create(
+                produceFile = { File(tmp.root, "legacy-blank-dictionary.preferences_pb") },
+            )
+        val repo = SettingsRepository(dataStore)
+
+        dataStore.edit {
+            it[stringPreferencesKey("dictionary")] = "{\"entries\":[{\"match\":\"test\",\"replace\":\"\"}]}"
+        }
+
+        val entries = repo.dictionary.first()
+        assertEquals(1, entries.size)
+        assertEquals("test", entries[0].match)
+        assertEquals("", entries[0].replace)
     }
 
     @Test
